@@ -1,0 +1,369 @@
+# include <stdio.h>
+# include <signal.h>
+
+# include "mfile1"
+
+extern int usedregs;	/* bit == 1 if reg was used in subroutine */
+extern char *rnames[];
+int proflag;
+int strftn = 0;	/* is the current function one which returns a value */
+FILE *tmpfp;
+FILE *outfile;
+
+branch( n ){
+	/* output a branch to label n */
+	printf( "	jr	.L%d\n", n );
+	}
+
+int lastloc = PROG;
+
+defalign(n) {
+	/* cause the alignment to become a multiple of n */
+	n /= SZCHAR;
+	if( lastloc != PROG && n > 1 ) printf( "	.even\n" );
+	}
+
+locctr( l ){
+	register temp;
+	/* l is PROG, ADATA, DATA, STRNG, ISTRNG, or STAB */
+
+	if( l == lastloc ) return(l);
+	temp = lastloc;
+	lastloc = l;
+	switch( l ){
+
+	case PROG:
+		outfile = stdout;
+		printf( "	.text\n" );
+		break;
+
+	case DATA:
+	case ADATA:
+		outfile = stdout;
+		if( temp != DATA && temp != ADATA )
+			printf( "	.data\n" );
+		break;
+
+	case STRNG:
+	case ISTRNG:
+		outfile = tmpfp;
+		break;
+
+	case STAB:
+		cerror( "locctr: STAB unused" );
+		break;
+
+	default:
+		cerror( "illegal location counter" );
+		}
+
+	return( temp );
+	}
+
+deflab( n ){
+	/* output something to define the current position as label n */
+	fprintf( outfile, ".L%d:\n", n );
+	}
+
+int crslab = 10;
+
+getlab(){
+	/* return a number usable for a label */
+	return( ++crslab );
+	}
+
+efcode(){
+	/* code for the end of a function */
+
+	if( strftn ){  /* copy output (in r0) to caller */
+		register struct symtab *p;
+		register int stlab;
+		register int i;
+		int size;
+
+		p = &stab[curftn];
+
+		deflab( retlab );
+		retlab = getlab();
+
+		stlab = getlab();
+		/* r0 has pointer to return value area from caller */
+		/* copy struct to static area, return pointer in r0 */
+		printf( "	ld	.r8,.r0\n" );  /* src ptr */
+		printf( "	ld	.r9,#.L%d\n" , stlab );  /* dst ptr */
+		size = tsize( DECREF(p->stype), p->dimoff, p->sizoff ) / SZCHAR;
+		if( size > 4 ){
+			printf( "	ld	.r0,#%d\n", size );
+			printf( "	ldir	@.r9,@.r8,.r0\n" );
+		} else {
+			i = size;
+			while( i > 0 ){
+				if( i >= 2 ){
+					printf("	ld	.r0,@.r8\n");
+					printf("	ld	@.r9,.r0\n");
+					printf("	inc	.r8,#2\n");
+					printf("	inc	.r9,#2\n");
+					i -= 2;
+				} else {
+					printf("	ldb	.rl0,@.r8\n");
+					printf("	ldb	@.r9,.rl0\n");
+					i -= 1;
+				}
+			}
+		}
+		printf( "	ld	.r0,#.L%d\n", stlab );
+		printf( "	.bss\n	.even\n.L%d:	.=.+%d\n	.text\n", stlab, size );
+		/* turn off strftn flag, so return sequence will be generated */
+		strftn = 0;
+		}
+	branch( retlab );
+	p2bend();
+	}
+
+bfcode( a, n ) int a[]; {
+	/* code for the beginning of a function; a is an array of
+		indices in stab for the arguments; n is the number */
+	register i;
+	register temp;
+	register struct symtab *p;
+	int off;
+
+	locctr( PROG );
+	p = &stab[curftn];
+	defnam( p );
+	temp = p->stype;
+	temp = DECREF(temp);
+	strftn = (temp==STRTY) || (temp==UNIONTY);
+
+	retlab = getlab();
+	if( proflag ){
+		int plab;
+		plab = getlab();
+		printf( "	ld	.r0,#.L%d\n", plab );
+		printf( "	call	mcount\n" );
+		printf( "	.data\n.L%d:	.word 0\n	.text\n", plab );
+		}
+
+	/* routine prolog */
+	/* push .r14, ld .r14,.sp, sub .sp,#framesize */
+
+	printf( "	push	@.sp,.r14\n" );
+	printf( "	ld	.r14,.sp\n" );
+	printf( "	sub	.sp,#_F%d\n", ftnno );
+	/* save callee-saved regs - deferred to epilogue where we know which were used */
+	usedregs = 0;
+
+	off = ARGINIT;
+
+	for( i=0; i<n; ++i ){
+		p = &stab[a[i]];
+		if( p->sclass == REGISTER ){
+			temp = p->offset;  /* save register number */
+			p->sclass = PARAM;  /* forget that it is a register */
+			p->offset = NOOFFSET;
+			oalloc( p, &off );
+			/* load param into register */
+			if (p->stype==CHAR || p->stype==UCHAR)
+				printf( "	ldb	%s,%d(.r14)\n",
+				  rnames[temp], p->offset/SZCHAR );
+			else
+				printf( "	ld	%s,%d(.r14)\n",
+				  rnames[temp], p->offset/SZCHAR );
+			usedregs |= 1<<temp;
+			p->offset = temp;  /* remember register number */
+			p->sclass = REGISTER;   /* remember that it is a register */
+			}
+		else {
+			if( oalloc( p, &off ) ) cerror( "bad argument" );
+			}
+
+		}
+	printf("! A%d = %d\n", ftnno, off/SZCHAR);
+	}
+
+bccode(){ /* called just before the first executable statment */
+		/* by now, the automatics and register variables are allocated */
+	SETOFF( autooff, SZINT );
+	/* set aside store area offset */
+	p2bbeg( autooff, regvar );
+	}
+
+ejobcode( flag ){
+	/* called just before final exit */
+	/* flag is 1 if errors, 0 if none */
+	}
+
+aobeg(){
+	/* called before removing automatics from stab */
+	}
+
+aocode(p) struct symtab *p; {
+	/* called when automatic p removed from stab */
+	}
+
+aoend(){
+	/* called after removing all automatics from stab */
+	}
+
+defnam( p ) register struct symtab *p; {
+	/* define the current location as the name p->sname */
+
+	if( p->sclass == EXTDEF ){
+		printf( "	.globl	%s\n", exname( p->sname ) );
+		}
+	if( p->sclass == STATIC && p->slevel>1 ) deflab( p->offset );
+	else printf( "%s:\n", exname( p->sname ) );
+
+	}
+
+bycode( t, i ){
+	/* put byte i+1 in a string */
+
+	i &= 07;
+	if( t < 0 ){ /* end of the string */
+		if( i != 0 ) fprintf( outfile, "\n" );
+		}
+
+	else { /* stash byte t into string */
+		if( i == 0 ) fprintf( outfile, "	.byte	" );
+		else fprintf( outfile, "," );
+		fprintf( outfile, "%d", t );
+		if( i == 07 ) fprintf( outfile, "\n" );
+		}
+	}
+
+zecode( n ){
+	/* n integer words of zeros */
+	OFFSZ temp;
+	register i;
+
+	if( n <= 0 ) return;
+	printf("	.zerow	%d\n", n );
+	temp = n;
+	inoff += temp*SZINT;
+	}
+
+fldal( t ) unsigned t; { /* return the alignment of field of type t */
+	uerror( "illegal field type" );
+	return( ALINT );
+	}
+
+fldty( p ) struct symtab *p; { /* fix up type of field p */
+	;
+	}
+
+where(c){ /* print location of error  */
+	/* c is either 'u', 'c', or 'w' */
+	fprintf( stderr, "%s, line %d: ", ftitle, lineno );
+	}
+
+char tmpname[] = "/tmp/pcXXXXXX";
+
+main( argc, argv ) char *argv[]; {
+	int dexit();
+	register int c;
+	register int i;
+	int r;
+
+	outfile = stdout;
+	for( i=1; i<argc; ++i )
+		if( argv[i][0] == '-' && argv[i][1] == 'X' && argv[i][2] == 'p' ) {
+			proflag = 1;
+			}
+
+	mktemp(tmpname);
+	tmpfp = fopen( tmpname, "w" );
+	if(tmpfp == NULL) cerror( "Cannot open temp file" );
+
+	r = mainp1( argc, argv );
+
+	tmpfp = freopen( tmpname, "r", tmpfp );
+	if( tmpfp != NULL )
+		while((c=getc(tmpfp)) != EOF )
+			putchar(c);
+	else cerror( "Lost temp file" );
+	unlink(tmpname);
+	return( r );
+	}
+
+dexit( v ) {
+	unlink(tmpname);
+	exit(1);
+	}
+
+genswitch(p,n) register struct sw *p;{
+	/*	p points to an array of structures, each consisting
+		of a constant value and a label.
+		The first is >=0 if there is a default label;
+		its value is the label number
+		The entries p[1] to p[n] are the nontrivial cases
+		*/
+	register i;
+	register CONSZ j, range;
+	register dlab, swlab;
+
+	range = p[n].sval-p[1].sval;
+
+	if( range>0 && range <= 3*n && n>=4 ){ /* implement a direct switch */
+
+		dlab = p->slab >= 0 ? p->slab : getlab();
+
+		if( p[1].sval ){
+			printf( "	sub	.r0,#" );
+			printf( CONFMT, p[1].sval );
+			printf( "\n" );
+			}
+
+		/* compare and branch if out of range */
+		printf( "	cp	.r0,#%ld\n", range );
+		printf( "	jr	ugt,.L%d\n", dlab );
+
+		/* table jump: index into word table */
+		printf( "	sla	.r0,#1\n" );  /* multiply by 2 for word offset */
+		swlab = getlab();
+		printf( "	ld	.r1,#.L%d\n", swlab );
+		printf( "	add	.r1,.r0\n" );
+		printf( "	ld	.r0,@.r1\n" );
+		printf( "	jp	@.r0\n" );
+
+		/* output table */
+
+		printf( ".L%d:\n", swlab );
+
+		for( i=1,j=p[1].sval; i<=n; ++j ){
+
+			printf( "	.word	.L%d\n", ( j == p[i].sval ) ?
+				p[i++].slab : dlab );
+			}
+
+		if( p->slab< 0 ) deflab( dlab );
+		return;
+
+		}
+
+	genbinary(p,1,n,0);
+}
+
+genbinary(p,lo,hi,lab)
+  register struct sw *p;
+  {	register int i,lab1;
+
+	if (lab) printf(".L%d:",lab);	/* print label, if any */
+
+	if (hi-lo > 4) {		/* if lots more, do another level */
+	  i = lo + ((hi-lo)>>1);	/* index at which we'll break this time */
+	  printf( "	cp	.r0,#" );
+	  printf( CONFMT, p[i].sval );
+	  printf( "\n	jr	eq,.L%d\n", p[i].slab );
+	  printf( "	jr	gt,.L%d\n", lab1=getlab() );
+	  genbinary(p,lo,i-1,0);
+	  genbinary(p,i+1,hi,lab1);
+	} else {			/* simple switch code for remaining cases */
+	  for( i=lo; i<=hi; ++i ) {
+	    printf( "	cp	.r0,#" );
+	    printf( CONFMT, p[i].sval );
+	    printf( "\n	jr	eq,.L%d\n", p[i].slab );
+	  }
+	  if( p->slab>=0 ) branch( p->slab );
+	}
+}

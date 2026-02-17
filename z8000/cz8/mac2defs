@@ -1,0 +1,48 @@
+/*	Z8002 Registers */
+
+	/* registers */
+# define R0 0
+# define R1 1
+# define R2 2
+# define R3 3
+# define R4 4
+# define R5 5
+# define R6 6
+# define R7 7
+# define R8 8
+# define R9 9
+# define R10 10
+# define R11 11
+# define R12 12
+# define R13 13
+# define FP 14
+# define SP 15
+
+# define SAVEREGION 8 /* number of bytes for save area */
+
+# define BYTEOFF(x) ((x)&01)
+# define wdal(k) (BYTEOFF(k)==0)
+# define BITOOR(x) ((x)>>3)  /* bit offset to oreg offset */
+
+# define REGSZ 16
+
+# define TMPREG FP
+
+
+# define STOARG(p)     /* just evaluate the arguments, and be done with it... */
+# define STOFARG(p)
+# define STOSTARG(p)
+# define genfcall(a,b) gencall(a,b)
+
+
+	/* shape for constants between -128 and 127 */
+# define SCCON (SPECIAL+100)
+	/* shape for constants between 0 and 32767 */
+# define SICON (SPECIAL+101)
+	/* shape for constants between 1 and 16 (for inc/dec) */
+# define S16CON (SPECIAL+102)
+
+# define MYREADER(p) myreader(p)
+extern int fltused;
+	/* Z8000 does NOT have nestable calls via link/unlink like 68000 */
+	/* no NESTCALLS - args tracked via toff */
