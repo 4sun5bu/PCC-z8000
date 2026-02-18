@@ -89,29 +89,29 @@ efcode(){
 		stlab = getlab();
 		/* r0 has pointer to return value area from caller */
 		/* copy struct to static area, return pointer in r0 */
-		printf( "	ld	.r8,.r0\n" );  /* src ptr */
-		printf( "	ld	.r9,#.L%d\n" , stlab );  /* dst ptr */
+		printf( "	ld	r8,r0\n" );  /* src ptr */
+		printf( "	ld	r9,#.L%d\n" , stlab );  /* dst ptr */
 		size = tsize( DECREF(p->stype), p->dimoff, p->sizoff ) / SZCHAR;
 		if( size > 4 ){
-			printf( "	ld	.r0,#%d\n", size );
-			printf( "	ldir	@.r9,@.r8,.r0\n" );
+			printf( "	ld	r0,#%d\n", size );
+			printf( "	ldir	@r9,@r8,r0\n" );
 		} else {
 			i = size;
 			while( i > 0 ){
 				if( i >= 2 ){
-					printf("	ld	.r0,@.r8\n");
-					printf("	ld	@.r9,.r0\n");
-					printf("	inc	.r8,#2\n");
-					printf("	inc	.r9,#2\n");
+					printf("	ld	r0,@r8\n");
+					printf("	ld	@r9,r0\n");
+					printf("	inc	r8,#2\n");
+					printf("	inc	r9,#2\n");
 					i -= 2;
 				} else {
-					printf("	ldb	.rl0,@.r8\n");
-					printf("	ldb	@.r9,.rl0\n");
+					printf("	ldb	rl0,@r8\n");
+					printf("	ldb	@r9,rl0\n");
 					i -= 1;
 				}
 			}
 		}
-		printf( "	ld	.r0,#.L%d\n", stlab );
+		printf( "	ld	r0,#.L%d\n", stlab );
 		printf( "	.bss\n	.even\n.L%d:	.=.+%d\n	.text\n", stlab, size );
 		/* turn off strftn flag, so return sequence will be generated */
 		strftn = 0;
@@ -139,17 +139,17 @@ bfcode( a, n ) int a[]; {
 	if( proflag ){
 		int plab;
 		plab = getlab();
-		printf( "	ld	.r0,#.L%d\n", plab );
+		printf( "	ld	r0,#.L%d\n", plab );
 		printf( "	call	mcount\n" );
 		printf( "	.data\n.L%d:	.word 0\n	.text\n", plab );
 		}
 
 	/* routine prolog */
-	/* push .r14, ld .r14,.sp, sub .sp,#framesize */
+	/* push R14, ld R14,SP, sub SP,#framesize */
 
-	printf( "	push	@.sp,.r14\n" );
-	printf( "	ld	.r14,.sp\n" );
-	printf( "	sub	.sp,#_F%d\n", ftnno );
+	printf( "	push	@sp,r14\n" );
+	printf( "	ld	r14,sp\n" );
+	printf( "	sub	sp,#_F%d\n", ftnno );
 	/* save callee-saved regs - deferred to epilogue where we know which were used */
 	usedregs = 0;
 
@@ -164,10 +164,10 @@ bfcode( a, n ) int a[]; {
 			oalloc( p, &off );
 			/* load param into register */
 			if (p->stype==CHAR || p->stype==UCHAR)
-				printf( "	ldb	%s,%d(.r14)\n",
+				printf( "	ldb	%s,%d(r14)\n",
 				  rnames[temp], p->offset/SZCHAR );
 			else
-				printf( "	ld	%s,%d(.r14)\n",
+				printf( "	ld	%s,%d(r14)\n",
 				  rnames[temp], p->offset/SZCHAR );
 			usedregs |= 1<<temp;
 			p->offset = temp;  /* remember register number */
@@ -309,22 +309,22 @@ genswitch(p,n) register struct sw *p;{
 		dlab = p->slab >= 0 ? p->slab : getlab();
 
 		if( p[1].sval ){
-			printf( "	sub	.r0,#" );
+			printf( "	sub	r0,#" );
 			printf( CONFMT, p[1].sval );
 			printf( "\n" );
 			}
 
 		/* compare and branch if out of range */
-		printf( "	cp	.r0,#%ld\n", range );
+		printf( "	cp	r0,#%ld\n", range );
 		printf( "	jr	ugt,.L%d\n", dlab );
 
 		/* table jump: index into word table */
-		printf( "	sla	.r0,#1\n" );  /* multiply by 2 for word offset */
+		printf( "	sla	r0,#1\n" );  /* multiply by 2 for word offset */
 		swlab = getlab();
-		printf( "	ld	.r1,#.L%d\n", swlab );
-		printf( "	add	.r1,.r0\n" );
-		printf( "	ld	.r0,@.r1\n" );
-		printf( "	jp	@.r0\n" );
+		printf( "	ld	r1,#.L%d\n", swlab );
+		printf( "	add	r1,r0\n" );
+		printf( "	ld	r0,@r1\n" );
+		printf( "	jp	@r0\n" );
 
 		/* output table */
 
@@ -352,7 +352,7 @@ genbinary(p,lo,hi,lab)
 
 	if (hi-lo > 4) {		/* if lots more, do another level */
 	  i = lo + ((hi-lo)>>1);	/* index at which we'll break this time */
-	  printf( "	cp	.r0,#" );
+	  printf( "	cp	r0,#" );
 	  printf( CONFMT, p[i].sval );
 	  printf( "\n	jr	eq,.L%d\n", p[i].slab );
 	  printf( "	jr	gt,.L%d\n", lab1=getlab() );
@@ -360,7 +360,7 @@ genbinary(p,lo,hi,lab)
 	  genbinary(p,i+1,hi,lab1);
 	} else {			/* simple switch code for remaining cases */
 	  for( i=lo; i<=hi; ++i ) {
-	    printf( "	cp	.r0,#" );
+	    printf( "	cp	r0,#" );
 	    printf( CONFMT, p[i].sval );
 	    printf( "\n	jr	eq,.L%d\n", p[i].slab );
 	  }

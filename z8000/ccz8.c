@@ -293,11 +293,10 @@ passa:
 			continue;
 assemble:
 		av[0] = "az8";
-		av[1] = "-c";
-		av[2] = "-o";
-		av[3] = setsuf(clist[i], "b");
-		av[4] = assource;
-		av[5] = 0;
+		av[1] = "-o";
+		av[2] = setsuf(clist[i], "b");
+		av[3] = assource;
+		av[4] = 0;
 		cunlink(tmp1);
 		cunlink(tmp2);
 		cunlink(tmp4);

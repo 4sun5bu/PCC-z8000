@@ -653,7 +653,7 @@ genargs( p) register NODE *p; {
 		/* Z8000: must load through register, then push */
 		for( ; size>0; size -= 2 ){
 			p->tn.lval -= 2;
-			expand( p, RNOP, "\tld\t.r0,AR\n\tpush\t@.sp,.r0\n" );
+			expand( p, RNOP, "\tld\tr0,AR\n\tpush\t@sp,r0\n" );
 			toff += 2;
 			}
 		reclaim( p, RNULL, 0 );

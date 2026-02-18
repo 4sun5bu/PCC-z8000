@@ -352,8 +352,15 @@ init_regs()
 	register struct def *p;
 	struct sym_bkt *Lookup();
 
-	if(Cflag) p = cdefregs;
-	else	  p = defregs;
+	/* always load both standard (r0) and C-style (.r0) register names */
+	p = defregs;
+	while (p->rname) {
+	  sbp = Lookup(p->rname);
+	  sbp->value_s = p->rnum;
+	  sbp->attr_s |= S_REG | S_DEC | S_DEF;
+	  p++;
+	}
+	p = cdefregs;
 	while (p->rname) {
 	  sbp = Lookup(p->rname);	/* Make a sym_bkt for it */
 	  sbp->value_s = p->rnum;	/* Load the sym_bkt */

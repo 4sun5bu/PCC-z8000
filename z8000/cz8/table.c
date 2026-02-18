@@ -37,6 +37,13 @@ ASSIGN,	INAREG|FOREFF,
 		0,	RLEFT|RRIGHT,
 		"	ldZB	AL,AR\n",
 
+/* assign word/byte: mem = mem (through temp register) */
+ASSIGN,	INAREG|FOREFF,
+	SNAME|SOREG|STARNM,	TSCALAR,
+	SNAME|SOREG|STARNM,	TSCALAR,
+		NAREG,	RLEFT|RRIGHT,
+		"	ldZB	A1,AR\n	ldZB	AL,A1\n",
+
 /* assign word: breg = anything */
 ASSIGN, INBREG|FOREFF,
 	SBREG,	TWORD,
@@ -84,7 +91,7 @@ ASSIGN, INTAREG|INAREG|FOREFF,
 	SFLD,	TANY,
 	SAREG|STAREG,	TANY,
 		NAREG,	RRIGHT,
-		"F	push	@.sp,AR\n	ld	A1,#H\n	sda	AR,A1\n	and	AR,#M\n	and	AL,#N\n	or	AL,AR\nF	pop	AR,@.sp\n",
+		"F	push	@sp,AR\n	ld	A1,#H\n	sda	AR,A1\n	and	AR,#M\n	and	AL,#N\n	OR	AL,AR\nF	pop	AR,@sp\n",
 
 /* === UNARY MUL (indirect load) === */
 
@@ -102,7 +109,7 @@ UNARY MUL,	INTAREG|INAREG,
 		NAREG|NASR,	RESC1,
 		"	ldb	A1,@AL\n",
 
-/* indirect load word through data register (must not be R0) */
+/* indirect load word through data register (must not be r0) */
 UNARY MUL,	INTAREG|INAREG,
 	SAREG,	TWORD,
 	SANY,	TANY,
@@ -191,56 +198,56 @@ OPLTYPE,	FORARG,
 	SANY,	TANY,
 	SAREG|SBREG,	TWORD,
 		0,	RNULL,
-		"	push	@.sp,AR\nZ-",
+		"	push	@sp,AR\nZ-",
 
 /* push word argument - constant source */
 OPLTYPE,	FORARG,
 	SANY,	TANY,
 	SCON,	TWORD,
 		0,	RNULL,
-		"	push	@.sp,AR\nZ-",
+		"	push	@sp,AR\nZ-",
 
 /* push word argument - memory source (load then push) */
 OPLTYPE,	FORARG,
 	SANY,	TANY,
 	SNAME|SOREG|STARNM,	TWORD,
 		0,	RNULL,
-		"	ld	.r0,AR\n	push	@.sp,.r0\nZ-",
+		"	ld	r0,AR\n	push	@sp,r0\nZ-",
 
 /* push char argument - sign extend to word then push */
 OPLTYPE,	FORARG,
 	SANY,	TANY,
 	EA,	TCHAR,
 		0,	RNULL,
-		"	ldb	.rl0,AR\n	extsb	.r0\n	push	@.sp,.r0\nZ-",
+		"	ldb	rl0,AR\n	extsb	r0\n	push	@sp,r0\nZ-",
 
 /* push unsigned char argument - zero extend to word then push */
 OPLTYPE,	FORARG,
 	SANY,	TANY,
 	EA,	TUCHAR,
 		0,	RNULL,
-		"	clr	.r0\n	ldb	.rl0,AR\n	push	@.sp,.r0\nZ-",
+		"	clr	r0\n	ldb	rl0,AR\n	push	@sp,r0\nZ-",
 
 /* push long argument (high word first to stack, so push low then high) */
 OPLTYPE,	FORARG,
 	SANY,	TANY,
 	SAREG,	TLONG|TULONG,
 		0,	RNULL,
-		"	push	@.sp,UR\n	push	@.sp,AR\nZ-Z-",
+		"	push	@sp,UR\n	push	@sp,AR\nZ-Z-",
 
 /* push long argument from memory */
 OPLTYPE,	FORARG,
 	SANY,	TANY,
 	SNAME|SOREG|STARNM,	TLONG|TULONG,
 		0,	RNULL,
-		"	ld	.r0,UR\n	push	@.sp,.r0\n	ld	.r0,AR\n	push	@.sp,.r0\nZ-Z-",
+		"	ld	r0,UR\n	push	@sp,r0\n	ld	r0,AR\n	push	@sp,r0\nZ-Z-",
 
 /* push long constant */
 OPLTYPE,	FORARG,
 	SANY,	TANY,
 	SCON,	TLONG|TULONG,
 		0,	RNULL,
-		"	push	@.sp,UR\n	push	@.sp,AR\nZ-Z-",
+		"	push	@sp,UR\n	push	@sp,AR\nZ-Z-",
 
 /* === OPLOG (comparison) === */
 
@@ -589,86 +596,86 @@ ASG RS,	INAREG|FOREFF,
 		"	srlb	AL,AR\n",
 
 /* === MUL / DIV / MOD (16-bit hardware operations) === */
-/* rallo ensures left operand is in R1 (part of pair RR0) */
+/* rallo ensures left operand is in r1 (part of pair rr0) */
 
-/* signed multiply: R1 * src -> RR0, low word (result) in R1 */
+/* signed multiply: r1 * src -> rr0, low word (result) in r1 */
 MUL,	INAREG|INTAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	mult	.rr0,AR\n",
+		"	mult	rr0,AR\n",
 
 /* unsigned multiply */
 MUL,	INAREG|INTAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	mult	.rr0,AR\n",
+		"	mult	rr0,AR\n",
 
-/* signed divide: exts R1 -> RR0, then RR0/src -> R1(quot), R0(rem) */
+/* signed divide: exts r1 -> rr0, then rr0/src -> r1(quot), r0(rem) */
 DIV,	INAREG|INTAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	exts	.rr0\n	div	.rr0,AR\n",
+		"	exts	rr0\n	div	rr0,AR\n",
 
 /* unsigned divide */
 DIV,	INAREG|INTAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	subl	.rr0,.rr0\n	ld	.r1,AL\n	div	.rr0,AR\n",
+		"	subl	rr0,rr0\n	ld	r1,AL\n	div	rr0,AR\n",
 
-/* signed modulus: same as div, then move remainder R0 -> R1 */
+/* signed modulus: same as div, then move remainder r0 -> r1 */
 MOD,	INAREG|INTAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	exts	.rr0\n	div	.rr0,AR\n	ld	.r1,.r0\n",
+		"	exts	rr0\n	div	rr0,AR\n	ld	r1,r0\n",
 
 /* unsigned modulus */
 MOD,	INAREG|INTAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	subl	.rr0,.rr0\n	ld	.r1,AL\n	div	.rr0,AR\n	ld	.r1,.r0\n",
+		"	subl	rr0,rr0\n	ld	r1,AL\n	div	rr0,AR\n	ld	r1,r0\n",
 
 /* ASG MUL/DIV/MOD */
 ASG MUL,	INAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	mult	.rr0,AR\n",
+		"	mult	rr0,AR\n",
 
 ASG MUL,	INAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	mult	.rr0,AR\n",
+		"	mult	rr0,AR\n",
 
 ASG DIV,	INAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	exts	.rr0\n	div	.rr0,AR\n",
+		"	exts	rr0\n	div	rr0,AR\n",
 
 ASG DIV,	INAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	subl	.rr0,.rr0\n	ld	.r1,AL\n	div	.rr0,AR\n",
+		"	subl	rr0,rr0\n	ld	r1,AL\n	div	rr0,AR\n",
 
 ASG MOD,	INAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	exts	.rr0\n	div	.rr0,AR\n	ld	.r1,.r0\n",
+		"	exts	rr0\n	div	rr0,AR\n	ld	r1,r0\n",
 
 ASG MOD,	INAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	subl	.rr0,.rr0\n	ld	.r1,AL\n	div	.rr0,AR\n	ld	.r1,.r0\n",
+		"	subl	rr0,rr0\n	ld	r1,AL\n	div	rr0,AR\n	ld	r1,r0\n",
 
 /* === UNARY CALL === */
 
@@ -682,7 +689,7 @@ UNARY CALL,	INTAREG,
 	SAREG,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	RESC1,
-		"	ld	.r8,AL\n	call	@.r8\nZ0",
+		"	ld	r8,AL\n	call	@r8\nZ0",
 
 /* === SCONV (type conversions) === */
 

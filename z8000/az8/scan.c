@@ -26,6 +26,7 @@ short cinfo[128] = {
 
 char *sassign(),*sdefer(),*exp(),*term();
 int slabel();
+char *op_resume;	/* set by sopcode for compound mnemonics (jr cc, jp cc) */
 
 char iline[LSIZE];	/* current input line resides */
 int Line_no;		/* current input line number */
@@ -95,6 +96,8 @@ scan()
 	    Prog_Error(E_OPCODE);
 	    continue;
 	  }
+	  /* for compound mnemonics (JR cc, JP cc), advance past condition */
+	  if (op_resume) { p = op_resume; skipb(p); i = cinfo[*p]; }
 
 	  if (i==EOL || i==EOS) { numops = 0; goto doins; }
 
@@ -131,9 +134,15 @@ int sopcode(token)
 	register struct ins_bkt *ibp;
 	char mnem[50];
 
-	/* make asciz version of mnemonic */
+	op_resume = 0;	/* default: no compound mnemonic */
+
+	/* make asciz version of mnemonic, folded to lowercase */
 	p = mnem;
-	while (cinfo[*token] & T) *p++ = *token++;
+	while (cinfo[*token] & T) {
+		*p = *token++;
+		if (*p >= 'A' && *p <= 'Z') *p += 'a' - 'A';
+		p++;
+	}
 	/* check for two-word opcode: "jr cc" or "jp cc" */
 	if (p - mnem == 2 && mnem[0] == 'j' && (mnem[1] == 'r' || mnem[1] == 'p')) {
 		/* peek ahead for condition code */
@@ -142,12 +151,22 @@ int sopcode(token)
 		while (*token == ' ' || *token == '\t') token++;
 		if (cinfo[*token] & (S|T)) {
 			*p++ = ' ';
-			while (cinfo[*token] & T) *p++ = *token++;
+			while (cinfo[*token] & T) {
+				*p = *token++;
+				if (*p >= 'A' && *p <= 'Z') *p += 'a' - 'A';
+				p++;
+			}
 			*p = 0;
 			/* try two-word lookup first */
 			ibp = ins_hash_tab[Hash(mnem)];
 			while (ibp) {
-				if (strcmp(ibp->text_i,mnem) == 0) return(ibp->code_i);
+				if (strcmp(ibp->text_i,mnem) == 0) {
+					/* skip comma/whitespace after condition */
+					while (*token == ' ' || *token == '\t') token++;
+					if (*token == ',') token++;
+					op_resume = token;
+					return(ibp->code_i);
+				}
 				ibp = ibp->next_i;
 			}
 			/* fall through to try single-word */
@@ -416,7 +435,14 @@ char *term(lptr,Vp)
     sym:  p = token;
 	  while (cinfo[*lptr] & T) *p++ = *lptr++;
 	  *p = 0;
-	  sbp = Lookup(token);		/* find its symbol bucket */
+	  /* try lowercase version for register lookup (R0->r0, SP->sp, etc.) */
+	  {	char lctok[50]; char *s, *d;
+		for (s=token, d=lctok; *s; s++, d++)
+			*d = (*s >= 'A' && *s <= 'Z') ? *s + ('a'-'A') : *s;
+		*d = 0;
+		sbp = Lookup(lctok);
+		if (!(sbp->attr_s & S_DEF)) sbp = Lookup(token);
+	  }
 
 	  if (sbp->attr_s & S_DEF)	/* if it's defined, use its value */
 	    Vp->value_o = sbp->value_s;

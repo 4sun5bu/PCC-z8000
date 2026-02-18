@@ -1,4 +1,4 @@
-XCFLAGS=-O -w -Wno-implicit-int -Wno-implicit-function-declaration -Wno-return-mismatch -Wno-int-conversion
+XCFLAGS=-O -w -Wno-implicit-int -Wno-implicit-function-declaration -Wno-return-mismatch -Wno-return-type -Wno-int-conversion
 
 cz8: cgram.o xdefs.o scan.o pftn.o trees.o optim.o code.o local.o reader.o \
 	local2.o order.o match.o allo.o comm1.o table.o

@@ -42,20 +42,20 @@ eobl2(){
 		off = -(int)spoff;
 		for( r = 4; r <= 7; r++ ){
 			if( savemask & (1<<r) ){
-				printf( "	ld	%s,%d(.r14)\n", rnames[r], off );
+				printf( "	ld	%s,%d(r14)\n", rnames[r], off );
 				off += 2;
 			}
 		}
 		for( r = 10; r <= 13; r++ ){
 			if( savemask & (1<<r) ){
-				printf( "	ld	%s,%d(.r14)\n", rnames[r], off );
+				printf( "	ld	%s,%d(r14)\n", rnames[r], off );
 				off += 2;
 			}
 		}
 	}
 
-	printf( "	ld	.sp,.r14\n" );
-	printf( "	pop	.r14,@.sp\n" );
+	printf( "	ld	sp,r14\n" );
+	printf( "	pop	r14,@sp\n" );
 	printf( "	ret\n" );
 	printf( "_F%d = %ld\n", ftnno, spoff );
 	printf( "_S%d = %d\n", ftnno, savemask );
@@ -96,8 +96,8 @@ hopcode( f, o ){
 char *
 rnames[]= {  /* keyed to register number tokens */
 
-	".r0", ".r1", ".r2", ".r3", ".r4", ".r5", ".r6", ".r7",
-	".r8", ".r9", ".r10", ".r11", ".r12", ".r13", ".r14", ".sp"
+	"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+	"r8", "r9", "r10", "r11", "r12", "r13", "r14", "sp"
 	};
 
 int rstatus[] = {
@@ -133,9 +133,9 @@ zzzcode( p, c ) NODE *p; {
 				adrput(p->in.left);
 				return;
 
-		  case OREG:	printf("\tld\t.r8,");
+		  case OREG:	printf("\tld\tr8,");
 				adrput(p->in.left);
-				printf("\n\tcall\t@.r8");
+				printf("\n\tcall\t@r8");
 				return;
 
 		  default:	cerror("bad subroutine name");
@@ -224,7 +224,7 @@ zzzcode( p, c ) NODE *p; {
 		{
 			register int r;
 			r = getlr( p, '1' )->tn.rval;
-			printf( ".rr%d", r & ~1 );
+			printf( "rr%d", r & ~1 );
 		}
 		return;
 
@@ -261,12 +261,12 @@ zzzcode( p, c ) NODE *p; {
 			if( size > 4 && p->in.op == STASG ){
 				/* use LDIR for large struct copy */
 				/* dst addr in left reg, src addr in right reg */
-				printf( "	ld	.r0,#%d\n", size );
+				printf( "	ld	r0,#%d\n", size );
 				printf( "	ldir	@" );
 				adrput( l );
 				printf( ",@" );
 				adrput( r );
-				printf( ",.r0\n" );
+				printf( ",r0\n" );
 			} else {
 				/* small struct: word-by-word copy */
 				r->tn.lval += size;
@@ -277,24 +277,24 @@ zzzcode( p, c ) NODE *p; {
 					i = (size > 1) ? 2 : 1;
 					r->tn.lval -= i;
 					if( i == 2 ){
-						expand( r, FOREFF, "\tld\t.r0,AR\n" );
+						expand( r, FOREFF, "\tld\tr0,AR\n" );
 					} else {
-						expand( r, FOREFF, "\tldb\t.rl0,AR\n" );
+						expand( r, FOREFF, "\tldb\trl0,AR\n" );
 					}
 					if( p->in.op == STASG ){
 						l->tn.lval -= i;
 						if( i == 2 ){
-							expand( l, FOREFF, "\tld\tAR,.r0\n" );
+							expand( l, FOREFF, "\tld\tAR,r0\n" );
 						} else {
-							expand( l, FOREFF, "\tldb\tAR,.rl0\n" );
+							expand( l, FOREFF, "\tldb\tAR,rl0\n" );
 						}
 					} else {
 						if( i == 2 )
-							printf( "\tpush\t@.sp,.r0\n" );
+							printf( "\tpush\t@sp,r0\n" );
 						else {
 							/* push byte as word */
-							printf( "\textsb\t.r0\n" );
-							printf( "\tpush\t@.sp,.r0\n" );
+							printf( "\textsb\tr0\n" );
+							printf( "\tpush\t@sp,r0\n" );
 						}
 					}
 					size -= i;
@@ -619,22 +619,22 @@ popargs( size ) register size; {
 
 	toff -= size/2;
 	if( size > 0 ){
-		printf( "\tadd\t.sp,#%d\n", size);
+		printf( "\tadd\tsp,#%d\n", size);
 		}
 	}
 
 char *
 ccbranches[] = {
-	"	jreq	.L%d\n",
-	"	jrne	.L%d\n",
-	"	jrle	.L%d\n",
-	"	jrlt	.L%d\n",
-	"	jrge	.L%d\n",
-	"	jrgt	.L%d\n",
-	"	jrule	.L%d\n",
-	"	jrult	.L%d\n",
-	"	jruge	.L%d\n",
-	"	jrugt	.L%d\n",
+	"	jr eq,.L%d\n",
+	"	jr ne,.L%d\n",
+	"	jr le,.L%d\n",
+	"	jr lt,.L%d\n",
+	"	jr ge,.L%d\n",
+	"	jr gt,.L%d\n",
+	"	jr ule,.L%d\n",
+	"	jr ult,.L%d\n",
+	"	jr uge,.L%d\n",
+	"	jr ugt,.L%d\n",
 	};
 
 /*	long branch table
