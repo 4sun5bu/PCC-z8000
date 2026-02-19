@@ -39,7 +39,7 @@ cd z8000 && cc -O -w -Wno-implicit-int -Wno-implicit-function-declaration -Wno-r
 - **Phase 6**: Testing — 11 test programs compile through `cz8` and assemble through `az8` end-to-end
 
 All four binaries (`cz8`, `az8`, `ccz8`, `ldz8`) compile and link successfully.
-Eleven test programs compile and assemble without errors: `hello.c`, `arith.c`, `control.c`, `switch.c`, `bitfield.c`, `shift.c`, `t.c`, `t6.c`, `t3.c`, `x.c`, plus the shift test.
+Eleven test programs compile and assemble without errors: `hello.c`, `arith.c`, `control.c`, `switch.c`, `bitfield.c`, `shift.c`, `t.c`, `t6.c`, `t3.c`, `x.c`.
 
 ### Fixes applied during Phase 6
 
