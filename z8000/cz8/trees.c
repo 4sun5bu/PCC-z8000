@@ -1029,15 +1029,19 @@ tymatch(p)  register NODE *p; {
 	  case DOUBLE:	t = DOUBLE;
 			break;
 
-	  case INT:	t = INT;
+	  case LONG:	t = LONG;
 			break;
 
-	  case SHORT:	t = t2==INT ? INT : SHORT;
+	  case INT:	t = t2==LONG ? LONG : INT;
+			break;
+
+	  case SHORT:	t = t2==LONG ? LONG : t2==INT ? INT : SHORT;
 			break;
 
 	  case CHAR:	t = t2;
 			break;
 	} else if (t1==DOUBLE || t1==FLOAT || t2==DOUBLE || t2==FLOAT ) t = DOUBLE;
+	else if (t1==LONG || t2==LONG) t = LONG;
 	else t = INT;
 
 	if( asgop(o) ){

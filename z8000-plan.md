@@ -175,16 +175,38 @@ z8000/
 
 20. **Write runtime library stubs**: `lmul`, `ldiv`, `lrem` (32-bit arithmetic), float/double library routines (can be stubbed initially)
 
-### Phase 6: Testing & Verification
+### Phase 6: Testing & Verification ✓
 
-21. **Build the compiler**: `cd z8000/cz8 && make` — verify it compiles with `cc -std=c89 -Wno-everything`
-22. **Build the assembler**: `cd z8000/az8 && make`
-23. **Test with simple programs**: compile `int main() { return 42; }`, inspect assembly output
-24. **Test arithmetic**: int add/sub/mul/div, long arithmetic, type conversions
-25. **Test control flow**: if/else, while, for, switch
-26. **Test pointers and arrays**: indirection, array indexing, struct access
-27. **Test function calls**: multiple args, long args, struct return
-28. **End-to-end**: compile → assemble → link → inspect binary
+21. ✓ **Build the compiler**: `cd z8000/cz8 && make`
+22. ✓ **Build the assembler**: `cd z8000/az8 && make`
+23. ✓ **Test with simple programs**: `main(){return 42;}` compiles and assembles end-to-end
+24. ✓ **Test arithmetic**: int add/sub/mul/div, long arithmetic, type conversions — 7 test programs pass (hello.c, arith.c, control.c, t.c, t6.c, t3.c, x.c)
+25. **Test control flow**: if/else, while, for work; switch NOT YET IMPLEMENTED
+26. **Test pointers and arrays**: basic indirection works; comprehensive tests needed
+27. **Test function calls**: word and long args work; struct return NOT YET IMPLEMENTED
+28. **End-to-end**: compile → assemble works; link → binary execution not yet tested on target
+
+#### Bugs found and fixed during Phase 6:
+- Assembler: `sopcode()` fallback, `!` comment char, `exts` size, indexed MULT/DIV, memory-immediate CP
+- Compiler: INTEMP mem-to-mem, INCR/DECR operand order, callee-saved register saves, `tymatch()` missing LONG case, SCONV template shapes, LONG↔ULONG template, `cbgen()` double-free
+
+### Phase 7: Remaining Work
+
+**High priority:**
+- Switch statement codegen (`genswitch()` in code.c)
+- Float/double software library (or at minimum stubs)
+- Pointer SCONV templates (ptr↔int, trivial on Z8000)
+
+**Medium priority:**
+- Struct argument passing (STARG templates)
+- Struct-valued function returns (STCALL templates)
+- Bitfield read/extraction templates
+- Long multiply/divide runtime library (`lmul`, `ldiv`, `lrem`, `ulmul`, `uldiv`, `ulrem`)
+
+**Low priority:**
+- Assembler pseudo-ops: `.space`, `.align N`, `.fill`, `.set`
+- Variadic function support
+- Linker improvements (weak symbols, validation)
 
 ## Key Technical Risks
 

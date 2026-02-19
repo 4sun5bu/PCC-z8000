@@ -682,7 +682,7 @@ cbgen( o, lab, mode ) { /*   printf conditional and unconditional branches */
 			expand( brnode, FORCC, brcase=='C' ? "\tcp\tUL,UR\n" : "\ttest\tUR\n" );
 			printf( ccbranches[*++plb-EQ], lab);
 			deflab( lab1f );
-			reclaim( brnode, RNULL, 0 );
+			/* reclaim handled by match() after expand returns */
 			break;
 
 		default:

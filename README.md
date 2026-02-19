@@ -35,17 +35,43 @@ cd z8000 && cc -O -w -Wno-implicit-int -Wno-implicit-function-declaration -Wno-r
 - **Phase 3**: Instruction templates written (`table.c`)
 - **Phase 4**: Z8000 assembler (`az8`) written and builds
 - **Phase 5**: Driver (`ccz8.c`), linker (`ldz8.c`), and runtime (`crt0.az8`) written and build
-- **Phase 6**: Testing — all test programs (`hello.c`, `arith.c`, `control.c`) compile through `cz8` and assemble through `az8` end-to-end
+- **Phase 6**: Testing — 7 test programs compile through `cz8` and assemble through `az8` end-to-end
 
 All four binaries (`cz8`, `az8`, `ccz8`, `ldz8`) compile and link successfully.
-All three test programs compile and assemble without errors.
+Seven test programs compile and assemble without errors: `hello.c`, `arith.c`, `control.c`, `t.c`, `t6.c`, `t3.c`, `x.c`.
 
 ### Fixes applied during Phase 6
 
-- `az8/scan.c`: fixed `sopcode()` compound opcode fallback bug, added `!` as comment char
-- `az8/ins.c`: fixed `exts` to use size L; added `t_x` indexed addressing to `mult_op`/`div_op`; added memory-immediate compare to `alu_op`
-- `cz8/local2.c`: changed `ccbranches[]` to `"jr eq,.L%d"` compound opcode format
-- `cz8/table.c`: fixed INTEMP template to route memory sources through `r0`/`rl0` scratch register (Z8000 LD can't do mem-to-mem)
+**Assembler (`az8`):**
+- `scan.c`: fixed `sopcode()` compound opcode fallback bug, added `!` as comment char
+- `ins.c`: fixed `exts` to use size L; added `t_x` indexed addressing to `mult_op`/`div_op`; added memory-immediate compare to `alu_op`
+
+**Compiler backend (`cz8`):**
+- `local2.c`: changed `ccbranches[]` to `"jr eq,.L%d"` compound opcode format
+- `table.c`: fixed INTEMP template to route memory sources through `r0`/`rl0` scratch register (Z8000 LD can't do mem-to-mem)
+- `table.c`: fixed INCR/DECR reversed operands
+- `local2.c`: added callee-saved register save/restore in prologue/epilogue
+- `trees.c`: added `case LONG:` to `tymatch()` logop switch — on Z8000 LONG≠INT (32 vs 16 bits), so LONG reaches `tymatch` unlike 68000/16032 ports where `ctype()` maps LONG→INT
+- `table.c`: widened int→long and uint→ulong SCONV source shapes from `SAREG|STAREG` to `EA|STAREG|STBREG`; added LONG↔ULONG no-op SCONV template
+- `local2.c`: removed double-free `reclaim()` from `cbgen()` case 'C' (match.c already calls reclaim after expand)
+
+### Known gaps (not yet implemented)
+
+**High severity:**
+- **Switch statements** — no `genswitch()` implementation; falls back to generic rewriting
+- **Float/double** — all ops redirected to library calls (`fadd`, `fsub`, etc.) which don't exist yet; no float constants or comparisons
+- **Pointer SCONV** — ptr→int, int→ptr templates missing (trivial on Z8000, same size)
+
+**Medium severity:**
+- **Struct arguments (STARG)** — no templates for pushing structs as function args
+- **Struct-valued returns (STCALL)** — no templates
+- **Bitfield reads** — only bitfield write (assign) templates exist
+- **Long multiply/divide** — uses library calls (`lmul`, `ulmul`, etc.) which don't exist yet; 16-bit works
+
+**Low severity:**
+- **Assembler pseudo-ops** — no `.space`, `.align N`, `.fill`, `.set`
+- **Variadic functions** — no va_args/va_list support
+- **Linker** — no weak symbols, minimal relocation validation
 
 ## Key Technical Details
 

@@ -714,6 +714,13 @@ SCONV,	INTAREG,
 		0,	RLEFT,
 		"",
 
+/* long <-> ulong (same size, just signedness change - no code needed) */
+SCONV,	INTAREG,
+	STAREG,	TLONG|TULONG,
+	SANY,	TLONG|TULONG,
+		0,	RLEFT,
+		"",
+
 /* char -> int/word: sign extend byte to word */
 SCONV,	INTAREG,
 	STAREG,	TCHAR,
@@ -729,17 +736,17 @@ SCONV,	INTAREG,
 		"	and	AL,#0xFF\n",
 
 /* int -> long: sign extend word to long pair */
-/* source is in AL (one register), result needs register pair */
-/* need escape register pair; move source to low reg, sign extend */
+/* load source into low reg of pair, sign extend to fill high reg */
 SCONV,	INTAREG|INAREG,
-	SAREG|STAREG,	TINT|TSHORT,
+	EA|STAREG|STBREG,	TINT|TSHORT,
 	SANY,	TLONG|TULONG,
 		NAREG|NASR,	RESC1,
 		"	ld	U1,AL\n	exts	ZD\n",
 
 /* uint -> ulong: zero extend word to long pair */
+/* clear pair, then load source into low reg */
 SCONV,	INTAREG|INAREG,
-	SAREG|STAREG,	TUNSIGNED|TUSHORT|TPOINT,
+	EA|STAREG|STBREG,	TUNSIGNED|TUSHORT|TPOINT,
 	SANY,	TLONG|TULONG,
 		NAREG|NASR,	RESC1,
 		"	subl	ZD,ZD\n	ld	U1,AL\n",
