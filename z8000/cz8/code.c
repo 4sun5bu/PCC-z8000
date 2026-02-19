@@ -331,8 +331,8 @@ genswitch(p,n) register struct sw *p;{
 		swlab = getlab();
 		printf( "	ld	r1,#.L%d\n", swlab );
 		printf( "	add	r1,r0\n" );
-		printf( "	ld	r0,@r1\n" );
-		printf( "	jp	@r0\n" );
+		printf( "	ld	r1,@r1\n" );
+		printf( "	jp	@r1\n" );
 
 		/* output table */
 

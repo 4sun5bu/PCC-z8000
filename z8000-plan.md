@@ -180,22 +180,24 @@ z8000/
 21. ✓ **Build the compiler**: `cd z8000/cz8 && make`
 22. ✓ **Build the assembler**: `cd z8000/az8 && make`
 23. ✓ **Test with simple programs**: `main(){return 42;}` compiles and assembles end-to-end
-24. ✓ **Test arithmetic**: int add/sub/mul/div, long arithmetic, type conversions — 7 test programs pass (hello.c, arith.c, control.c, t.c, t6.c, t3.c, x.c)
-25. **Test control flow**: if/else, while, for work; switch NOT YET IMPLEMENTED
+24. ✓ **Test arithmetic**: int add/sub/mul/div, long arithmetic, type conversions — 8 test programs pass (hello.c, arith.c, control.c, switch.c, t.c, t6.c, t3.c, x.c)
+25. ✓ **Test control flow**: if/else, while, for, switch all work (dense table jump and sparse binary search)
 26. **Test pointers and arrays**: basic indirection works; comprehensive tests needed
 27. **Test function calls**: word and long args work; struct return NOT YET IMPLEMENTED
 28. **End-to-end**: compile → assemble works; link → binary execution not yet tested on target
 
 #### Bugs found and fixed during Phase 6:
 - Assembler: `sopcode()` fallback, `!` comment char, `exts` size, indexed MULT/DIV, memory-immediate CP
-- Compiler: INTEMP mem-to-mem, INCR/DECR operand order, callee-saved register saves, `tymatch()` missing LONG case, SCONV template shapes, LONG↔ULONG template, `cbgen()` double-free
+- Compiler: INTEMP mem-to-mem, INCR/DECR operand order, callee-saved register saves, `tymatch()` missing LONG case, SCONV template shapes, LONG↔ULONG template, `cbgen()` double-free, `genswitch()` R0 indirect bug
+
+#### Resolved during investigation (not actual gaps):
+- **Pointer SCONV** — PCONV nodes eliminated by `clocal()` in local.c before reaching template matching; no templates needed
+- **Switch statements** — `genswitch()` already existed in code.c with both table jump (dense) and binary search (sparse) paths; only needed R0 indirect fix
 
 ### Phase 7: Remaining Work
 
 **High priority:**
-- Switch statement codegen (`genswitch()` in code.c)
 - Float/double software library (or at minimum stubs)
-- Pointer SCONV templates (ptr↔int, trivial on Z8000)
 
 **Medium priority:**
 - Struct argument passing (STARG templates)
