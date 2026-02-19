@@ -150,7 +150,15 @@ bfcode( a, n ) int a[]; {
 	printf( "	push	@sp,r14\n" );
 	printf( "	ld	r14,sp\n" );
 	printf( "	sub	sp,#_F%d\n", ftnno );
-	/* save callee-saved regs - deferred to epilogue where we know which were used */
+	/* save callee-saved regs at fixed offsets from FP */
+	printf( "	ld	-2(r14),r4\n" );
+	printf( "	ld	-4(r14),r5\n" );
+	printf( "	ld	-6(r14),r6\n" );
+	printf( "	ld	-8(r14),r7\n" );
+	printf( "	ld	-10(r14),r10\n" );
+	printf( "	ld	-12(r14),r11\n" );
+	printf( "	ld	-14(r14),r12\n" );
+	printf( "	ld	-16(r14),r13\n" );
 	usedregs = 0;
 
 	off = ARGINIT;

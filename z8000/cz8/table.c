@@ -350,51 +350,51 @@ INCR,	INTAREG|INAREG|FOREFF,
 	EAA,	TSCALAR,
 	S16CON,	TSCALAR,
 		NAREG,	RESC1,
-		"F	ldZB	AL,A1\n	inc	AL,AR\n",
+		"F	ldZB	A1,AL\n	inc	AL,AR\n",
 
 DECR,	INTAREG|INAREG|FOREFF,
 	EAA,	TSCALAR,
 	S16CON,	TSCALAR,
 		NAREG,	RESC1,
-		"F	ldZB	AL,A1\n	dec	AL,AR\n",
+		"F	ldZB	A1,AL\n	dec	AL,AR\n",
 
 /* post-increment with general constant */
 INCR,	INTAREG|INAREG|FOREFF,
 	EAA,	TSCALAR,
 	SCON,	TSCALAR,
 		NAREG,	RESC1,
-		"F	ldZB	AL,A1\n	add	AL,AR\n",
+		"F	ldZB	A1,AL\n	add	AL,AR\n",
 
 DECR,	INTAREG|INAREG|FOREFF,
 	EAA,	TSCALAR,
 	SCON,	TSCALAR,
 		NAREG,	RESC1,
-		"F	ldZB	AL,A1\n	sub	AL,AR\n",
+		"F	ldZB	A1,AL\n	sub	AL,AR\n",
 
 /* post-increment into breg */
 INCR,	INTBREG|INBREG|FOREFF,
 	SBREG,	TWORD,
 	S16CON,	TWORD,
 		NBREG,	RESC1,
-		"F	ld	AL,A1\n	inc	AL,AR\n",
+		"F	ld	A1,AL\n	inc	AL,AR\n",
 
 DECR,	INTBREG|INBREG|FOREFF,
 	SBREG,	TWORD,
 	S16CON,	TWORD,
 		NBREG,	RESC1,
-		"F	ld	AL,A1\n	dec	AL,AR\n",
+		"F	ld	A1,AL\n	dec	AL,AR\n",
 
 INCR,	INTBREG|INBREG|FOREFF,
 	SBREG,	TWORD,
 	SCON,	TWORD,
 		NBREG,	RESC1,
-		"F	ld	AL,A1\n	add	AL,AR\n",
+		"F	ld	A1,AL\n	add	AL,AR\n",
 
 DECR,	INTBREG|INBREG|FOREFF,
 	SBREG,	TWORD,
 	SCON,	TWORD,
 		NBREG,	RESC1,
-		"F	ld	AL,A1\n	sub	AL,AR\n",
+		"F	ld	A1,AL\n	sub	AL,AR\n",
 
 /* === ASG PLUS / ASG MINUS === */
 

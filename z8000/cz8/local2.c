@@ -28,30 +28,23 @@ eobl2(){
 	spoff /= SZCHAR;
 	SETOFF(spoff,2);
 
-	/* only save regs used for reg vars: R4-R7 (data), R10-R13 (address) */
+	/* callee-saved regs are always saved in prologue at fixed offsets */
+	/* AUTOINIT reserves 16 bytes: R4-R7 at -2..-8, R10-R13 at -10..-16 */
 	savemask = usedregs & 0x3CF0;  /* bits for R4-R7 and R10-R13 */
-	spoff += 2*cntbits(savemask);	/* 2 bytes per saved register */
 
 	/* epilogue */
 	printf( ".L%d:\n", retlab );
 
-	/* restore callee-saved registers */
+	/* restore only the callee-saved registers that were actually used */
 	if( savemask ){
-		/* restore in reverse order from frame */
-		int r, off;
-		off = -(int)spoff;
-		for( r = 4; r <= 7; r++ ){
-			if( savemask & (1<<r) ){
-				printf( "	ld	%s,%d(r14)\n", rnames[r], off );
-				off += 2;
-			}
-		}
-		for( r = 10; r <= 13; r++ ){
-			if( savemask & (1<<r) ){
-				printf( "	ld	%s,%d(r14)\n", rnames[r], off );
-				off += 2;
-			}
-		}
+		if( savemask & (1<<4) ) printf( "	ld	r4,-2(r14)\n" );
+		if( savemask & (1<<5) ) printf( "	ld	r5,-4(r14)\n" );
+		if( savemask & (1<<6) ) printf( "	ld	r6,-6(r14)\n" );
+		if( savemask & (1<<7) ) printf( "	ld	r7,-8(r14)\n" );
+		if( savemask & (1<<10) ) printf( "	ld	r10,-10(r14)\n" );
+		if( savemask & (1<<11) ) printf( "	ld	r11,-12(r14)\n" );
+		if( savemask & (1<<12) ) printf( "	ld	r12,-14(r14)\n" );
+		if( savemask & (1<<13) ) printf( "	ld	r13,-16(r14)\n" );
 	}
 
 	printf( "	ld	sp,r14\n" );
