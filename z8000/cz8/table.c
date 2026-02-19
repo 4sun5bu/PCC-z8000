@@ -186,12 +186,26 @@ OPLTYPE,	INTBREG|INBREG,
 		NBREG|NBSR,	RESC1,
 		"	ld	A1,AR\n",
 
-/* load into temp */
+/* load into temp from register or constant */
 OPLTYPE,	INTEMP,
 	SANY,	TANY,
-	EA,	TSCALAR,
+	SAREG|SBREG|SCON,	TSCALAR,
 		NTEMP,	RESC1,
 		"	ldZB	A1,AR\n",
+
+/* load word into temp from memory (Z8000 can't do mem-to-mem ld) */
+OPLTYPE,	INTEMP,
+	SANY,	TANY,
+	SNAME|SOREG|STARNM,	TWORD,
+		NTEMP,	RESC1,
+		"	ld	r0,AR\n	ld	A1,r0\n",
+
+/* load byte into temp from memory */
+OPLTYPE,	INTEMP,
+	SANY,	TANY,
+	SNAME|SOREG|STARNM,	TCHAR|TUCHAR,
+		NTEMP,	RESC1,
+		"	ldb	rl0,AR\n	ldb	A1,rl0\n",
 
 /* push word argument - register source */
 OPLTYPE,	FORARG,
