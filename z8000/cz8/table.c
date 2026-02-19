@@ -80,18 +80,20 @@ ASSIGN,	INAREG|FOREFF,
 		"	ld	AL,AR\n	ld	UL,UR\n",
 
 /* assign to bit field: clear field */
+/* Z8000 has no memory-dest AND, so load/and/store through temp reg */
 ASSIGN, INAREG|FOREFF,
 	SFLD,	TANY,
 	SZERO,	TANY,
-		0,	RRIGHT,
-		"	and	AL,#Z~\n",
+		NAREG,	RRIGHT,
+		"	ld	A1,AL\n	and	A1,#Z~\n	ld	AL,A1\n",
 
 /* assign to bit field: general case */
+/* Z8000 has no memory-dest AND/OR, so load/modify/store through A1 */
 ASSIGN, INTAREG|INAREG|FOREFF,
 	SFLD,	TANY,
 	SAREG|STAREG,	TANY,
 		NAREG,	RRIGHT,
-		"F	push	@sp,AR\n	ld	A1,#H\n	sda	AR,A1\n	and	AR,#M\n	and	AL,#N\n	OR	AL,AR\nF	pop	AR,@sp\n",
+		"F	push	@sp,AR\n	ld	A1,#H\n	sda	AR,A1\n	and	AR,#M\n	ld	A1,AL\n	and	A1,#N\n	or	A1,AR\n	ld	AL,A1\nF	pop	AR,@sp\n",
 
 /* === UNARY MUL (indirect load) === */
 

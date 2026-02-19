@@ -14,7 +14,7 @@ z8000/
 ├── ldz8.c        # linker
 ├── crt0.az8      # C runtime startup
 ├── b.out.h       # object file format header
-└── test/         # test programs (hello.c, arith.c, control.c, switch.c)
+└── test/         # test programs (hello.c, arith.c, control.c, switch.c, bitfield.c)
 ```
 
 ## Build
@@ -35,10 +35,10 @@ cd z8000 && cc -O -w -Wno-implicit-int -Wno-implicit-function-declaration -Wno-r
 - **Phase 3**: Instruction templates written (`table.c`)
 - **Phase 4**: Z8000 assembler (`az8`) written and builds
 - **Phase 5**: Driver (`ccz8.c`), linker (`ldz8.c`), and runtime (`crt0.az8`) written and build
-- **Phase 6**: Testing — 8 test programs compile through `cz8` and assemble through `az8` end-to-end
+- **Phase 6**: Testing — 9 test programs compile through `cz8` and assemble through `az8` end-to-end
 
 All four binaries (`cz8`, `az8`, `ccz8`, `ldz8`) compile and link successfully.
-Eight test programs compile and assemble without errors: `hello.c`, `arith.c`, `control.c`, `switch.c`, `t.c`, `t6.c`, `t3.c`, `x.c`.
+Nine test programs compile and assemble without errors: `hello.c`, `arith.c`, `control.c`, `switch.c`, `bitfield.c`, `t.c`, `t6.c`, `t3.c`, `x.c`.
 
 ### Fixes applied during Phase 6
 
@@ -55,6 +55,7 @@ Eight test programs compile and assemble without errors: `hello.c`, `arith.c`, `
 - `table.c`: widened int→long and uint→ulong SCONV source shapes from `SAREG|STAREG` to `EA|STAREG|STBREG`; added LONG↔ULONG no-op SCONV template
 - `local2.c`: removed double-free `reclaim()` from `cbgen()` case 'C' (match.c already calls reclaim after expand)
 - `code.c`: fixed `genswitch()` table jump to use `jp @r1` instead of `jp @r0` (R0 can't be used for indirect addressing on Z8000)
+- `table.c`: fixed bitfield assign templates — Z8000 has no memory-dest AND/OR, so load/modify/store through temp register; also fixed `OR` escape → literal `or`
 
 ### Known gaps (not yet implemented)
 
@@ -62,9 +63,6 @@ Eight test programs compile and assemble without errors: `hello.c`, `arith.c`, `
 - **Float/double** — all ops redirected to library calls (`fadd`, `fsub`, etc.) which don't exist yet; no float constants or comparisons
 
 **Medium severity:**
-- **Struct arguments (STARG)** — no templates for pushing structs as function args
-- **Struct-valued returns (STCALL)** — no templates
-- **Bitfield reads** — only bitfield write (assign) templates exist
 - **Long multiply/divide** — uses library calls (`lmul`, `ulmul`, etc.) which don't exist yet; 16-bit works
 
 **Low severity:**

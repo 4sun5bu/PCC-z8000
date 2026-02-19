@@ -188,11 +188,14 @@ z8000/
 
 #### Bugs found and fixed during Phase 6:
 - Assembler: `sopcode()` fallback, `!` comment char, `exts` size, indexed MULT/DIV, memory-immediate CP
-- Compiler: INTEMP mem-to-mem, INCR/DECR operand order, callee-saved register saves, `tymatch()` missing LONG case, SCONV template shapes, LONG↔ULONG template, `cbgen()` double-free, `genswitch()` R0 indirect bug
+- Compiler: INTEMP mem-to-mem, INCR/DECR operand order, callee-saved register saves, `tymatch()` missing LONG case, SCONV template shapes, LONG↔ULONG template, `cbgen()` double-free, `genswitch()` R0 indirect bug, bitfield assign memory-dest AND/OR
 
 #### Resolved during investigation (not actual gaps):
 - **Pointer SCONV** — PCONV nodes eliminated by `clocal()` in local.c before reaching template matching; no templates needed
 - **Switch statements** — `genswitch()` already existed in code.c with both table jump (dense) and binary search (sparse) paths; only needed R0 indirect fix
+- **Struct arguments (STARG)** — already handled in `order.c:genargs()` which pushes struct words onto stack
+- **Struct-valued returns (STCALL)** — already handled: `genscall()` delegates to `gencall()` (rewrites to UNARY CALL); `efcode()` copies return value to static area
+- **Bitfield reads** — already worked via shift-right + AND mask in register; only bitfield writes had bugs (memory-dest AND/OR)
 
 ### Phase 7: Remaining Work
 
@@ -200,9 +203,6 @@ z8000/
 - Float/double software library (or at minimum stubs)
 
 **Medium priority:**
-- Struct argument passing (STARG templates)
-- Struct-valued function returns (STCALL templates)
-- Bitfield read/extraction templates
 - Long multiply/divide runtime library (`lmul`, `ldiv`, `lrem`, `ulmul`, `uldiv`, `ulrem`)
 
 **Low priority:**
