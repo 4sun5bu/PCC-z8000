@@ -592,6 +592,44 @@ ASG RS,	INAREG|FOREFF,
 		0,	RLEFT,
 		"	negZB	AR\n	sdl	AL,AR\n",
 
+/* long shift by immediate count */
+ASG LS,	INAREG|FOREFF,
+	SAREG|STAREG,	TLONG|TULONG,
+	SCON,	TWORD,
+		0,	RLEFT,
+		"	slal	ZQ,AR\n",
+
+ASG RS,	INAREG|FOREFF,
+	SAREG|STAREG,	TLONG,
+	SCON,	TWORD,
+		0,	RLEFT,
+		"	sral	ZQ,AR\n",
+
+ASG RS,	INAREG|FOREFF,
+	SAREG|STAREG,	TULONG,
+	SCON,	TWORD,
+		0,	RLEFT,
+		"	srll	ZQ,AR\n",
+
+/* long shift by register count (dynamic) */
+ASG LS,	INAREG|FOREFF,
+	SAREG|STAREG,	TLONG|TULONG,
+	SAREG,	TWORD,
+		0,	RLEFT,
+		"	sdal	ZQ,AR\n",
+
+ASG RS,	INAREG|FOREFF,
+	SAREG|STAREG,	TLONG,
+	SAREG,	TWORD,
+		0,	RLEFT,
+		"	negZB	AR\n	sdal	ZQ,AR\n",
+
+ASG RS,	INAREG|FOREFF,
+	SAREG|STAREG,	TULONG,
+	SAREG,	TWORD,
+		0,	RLEFT,
+		"	negZB	AR\n	sdll	ZQ,AR\n",
+
 /* byte shift */
 ASG LS,	INAREG|FOREFF,
 	SAREG|STAREG,	TCHAR|TUCHAR,

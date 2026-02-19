@@ -14,7 +14,8 @@ z8000/
 ├── ldz8.c        # linker
 ├── crt0.az8      # C runtime startup
 ├── b.out.h       # object file format header
-└── test/         # test programs (hello.c, arith.c, control.c, switch.c, bitfield.c)
+├── include/      # target headers (varargs.h)
+└── test/         # test programs
 ```
 
 ## Build
@@ -35,10 +36,10 @@ cd z8000 && cc -O -w -Wno-implicit-int -Wno-implicit-function-declaration -Wno-r
 - **Phase 3**: Instruction templates written (`table.c`)
 - **Phase 4**: Z8000 assembler (`az8`) written and builds
 - **Phase 5**: Driver (`ccz8.c`), linker (`ldz8.c`), and runtime (`crt0.az8`) written and build
-- **Phase 6**: Testing — 9 test programs compile through `cz8` and assemble through `az8` end-to-end
+- **Phase 6**: Testing — 11 test programs compile through `cz8` and assemble through `az8` end-to-end
 
 All four binaries (`cz8`, `az8`, `ccz8`, `ldz8`) compile and link successfully.
-Nine test programs compile and assemble without errors: `hello.c`, `arith.c`, `control.c`, `switch.c`, `bitfield.c`, `t.c`, `t6.c`, `t3.c`, `x.c`.
+Eleven test programs compile and assemble without errors: `hello.c`, `arith.c`, `control.c`, `switch.c`, `bitfield.c`, `shift.c`, `t.c`, `t6.c`, `t3.c`, `x.c`, plus the shift test.
 
 ### Fixes applied during Phase 6
 
@@ -56,6 +57,9 @@ Nine test programs compile and assemble without errors: `hello.c`, `arith.c`, `c
 - `local2.c`: removed double-free `reclaim()` from `cbgen()` case 'C' (match.c already calls reclaim after expand)
 - `code.c`: fixed `genswitch()` table jump to use `jp @r1` instead of `jp @r0` (R0 can't be used for indirect addressing on Z8000)
 - `table.c`: fixed bitfield assign templates — Z8000 has no memory-dest AND/OR, so load/modify/store through temp register; also fixed `OR` escape → literal `or`
+- `table.c`: added long shift templates (slal/sral/srll for static, sdal/sdll for dynamic)
+- `local2.c`: added ZQ escape to print register pair name for left operand
+- `include/varargs.h`: added K&R-style variadic function support header
 
 ### Known gaps (not yet implemented)
 
@@ -64,11 +68,6 @@ Nine test programs compile and assemble without errors: `hello.c`, `arith.c`, `c
 
 **Medium severity:**
 - **Long multiply/divide** — uses library calls (`lmul`, `ulmul`, etc.) which don't exist yet; 16-bit works
-
-**Low severity:**
-- **Assembler pseudo-ops** — no `.space`, `.align N`, `.fill`, `.set`
-- **Variadic functions** — no va_args/va_list support
-- **Linker** — no weak symbols, minimal relocation validation
 
 ## Key Technical Details
 

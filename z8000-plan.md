@@ -196,6 +196,10 @@ z8000/
 - **Struct arguments (STARG)** — already handled in `order.c:genargs()` which pushes struct words onto stack
 - **Struct-valued returns (STCALL)** — already handled: `genscall()` delegates to `gencall()` (rewrites to UNARY CALL); `efcode()` copies return value to static area
 - **Bitfield reads** — already worked via shift-right + AND mask in register; only bitfield writes had bugs (memory-dest AND/OR)
+- **Long shifts** — Z8000 has hardware long shifts (`slal`/`sral`/`srll`/`sdal`/`sdll`); templates were simply missing from table.c
+- **Assembler pseudo-ops** — `.=.+N` (space), `.even` (align), and symbol assignment already supported; compiler doesn't generate `.space`/`.align`/`.fill`
+- **Variadic functions** — stack-based calling convention works naturally; added `include/varargs.h` header
+- **Linker** — works for current use; weak symbols and validation are low-priority features no PCC port implements
 
 ### Phase 7: Remaining Work
 
@@ -204,11 +208,6 @@ z8000/
 
 **Medium priority:**
 - Long multiply/divide runtime library (`lmul`, `ldiv`, `lrem`, `ulmul`, `uldiv`, `ulrem`)
-
-**Low priority:**
-- Assembler pseudo-ops: `.space`, `.align N`, `.fill`, `.set`
-- Variadic function support
-- Linker improvements (weak symbols, validation)
 
 ## Key Technical Risks
 

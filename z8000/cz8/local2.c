@@ -221,6 +221,15 @@ zzzcode( p, c ) NODE *p; {
 		}
 		return;
 
+	case 'Q':
+		/* print register pair name for left operand (for long shifts) */
+		{
+			register int r;
+			r = getlr( p, 'L' )->tn.rval;
+			printf( "rr%d", r & ~1 );
+		}
+		return;
+
 	case 'U':
 		cerror( "Illegal ZU" );
 		/* NO RETURN */
