@@ -143,6 +143,7 @@ extern int numops,Errors,Line_no,Pass,BC;
 extern struct oper operands[];
 extern struct ins_bkt *ins_hash_tab[];
 extern struct sym_bkt *Lookup();
+extern struct sym_bkt *Find();
 extern struct sym_bkt *Dot_bkt;
 extern struct sym_bkt *Last_symbol;
 extern long Dot,tsize,dsize,bsize;

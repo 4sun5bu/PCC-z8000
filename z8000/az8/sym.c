@@ -89,6 +89,15 @@ struct sym_bkt *Lookup(s)
 	return(sym_hash_tab[Save] = sbp);
 }
 
+/* search-only lookup: returns NULL if not found, never creates */
+struct sym_bkt *Find(s)
+  register char *s;
+  {	register struct sym_bkt *sbp;
+	for (sbp = sym_hash_tab[Hash(s)]; sbp; sbp = sbp->next_s)
+	  if (strcmp(sbp->name_s, s) == 0) return sbp;
+	return NULL;
+}
+
 /* Sym_Fix -	Assigns index numbers
 		to the symbols.  Also performs relocation of
 		the symbols assuming data segment follows text

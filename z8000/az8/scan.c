@@ -440,8 +440,11 @@ char *term(lptr,Vp)
 		for (s=token, d=lctok; *s; s++, d++)
 			*d = (*s >= 'A' && *s <= 'Z') ? *s + ('a'-'A') : *s;
 		*d = 0;
-		sbp = Lookup(lctok);
-		if (!(sbp->attr_s & S_DEF)) sbp = Lookup(token);
+		sbp = Find(lctok);
+		if (sbp && (sbp->attr_s & S_DEF))
+			;  /* found defined lowercase symbol (register) */
+		else
+			sbp = Lookup(token);  /* use original case */
 	  }
 
 	  if (sbp->attr_s & S_DEF)	/* if it's defined, use its value */
