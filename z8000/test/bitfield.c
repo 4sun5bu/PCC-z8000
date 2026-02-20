@@ -1,45 +1,28 @@
-/* test bitfield read and write code generation */
+/* bitfield.c -- bitfield read/write */
 
-struct flags {
-	int a:3;
-	int b:5;
-	int c:8;
+struct bits {
+	unsigned a : 3;
+	unsigned b : 5;
+	unsigned c : 8;
 };
 
-int read_a(p) struct flags *p; {
-	return p->a;
-}
+main()
+{
+	struct bits bf;
 
-int read_b(p) struct flags *p; {
-	return p->b;
-}
+	bf.a = 5;
+	bf.b = 17;
+	bf.c = 200;
 
-int read_c(p) struct flags *p; {
-	return p->c;
-}
+	if (bf.a != 5) return 1;
+	if (bf.b != 17) return 2;
+	if (bf.c != 200) return 3;
 
-write_a(p, v) struct flags *p; int v; {
-	p->a = v;
-}
+	/* modify one field, check others are intact */
+	bf.b = 31;
+	if (bf.a != 5) return 4;
+	if (bf.b != 31) return 5;
+	if (bf.c != 200) return 6;
 
-write_b(p, v) struct flags *p; int v; {
-	p->b = v;
-}
-
-clear_a(p) struct flags *p; {
-	p->a = 0;
-}
-
-main() {
-	struct flags f;
-	f.a = 3;
-	f.b = 10;
-	f.c = 255;
-	read_a(&f);
-	read_b(&f);
-	read_c(&f);
-	write_a(&f, 5);
-	write_b(&f, 20);
-	clear_a(&f);
 	return 0;
 }

@@ -179,24 +179,24 @@ Instruction(opindex)
 
 /* =================== Shift and rotate =================== */
 
-	case i_sla:	shift_op(0xB309, W); break;
-	case i_slab:	shift_op(0xB208, B); break;
-	case i_slal:	shift_op(0xB30D, L); break;
-	case i_sra:	shift_op(0xB309, W); break;  /* same opcode, negative count = right */
-	case i_srab:	shift_op(0xB208, B); break;
-	case i_sral:	shift_op(0xB30D, L); break;
-	case i_sll:	shift_op(0xB301, W); break;
-	case i_sllb:	shift_op(0xB200, B); break;
-	case i_slll:	shift_op(0xB305, L); break;
-	case i_srl:	shift_op(0xB301, W); break;  /* same opcode, negative count = right */
-	case i_srlb:	shift_op(0xB200, B); break;
-	case i_srll:	shift_op(0xB305, L); break;
-	case i_sda:	shift_op(0xB303, W); break;
-	case i_sdab:	shift_op(0xB202, B); break;
-	case i_sdal:	shift_op(0xB307, L); break;
-	case i_sdl:	shift_op(0xB30B, W); break;
-	case i_sdlb:	shift_op(0xB20A, B); break;
-	case i_sdll:	shift_op(0xB30F, L); break;
+	case i_sla:	shift_op(0xB309, W, 1); break;
+	case i_slab:	shift_op(0xB208, B, 1); break;
+	case i_slal:	shift_op(0xB30D, L, 1); break;
+	case i_sra:	shift_op(0xB309, W, -1); break;  /* right: negate count */
+	case i_srab:	shift_op(0xB208, B, -1); break;
+	case i_sral:	shift_op(0xB30D, L, -1); break;
+	case i_sll:	shift_op(0xB301, W, 1); break;
+	case i_sllb:	shift_op(0xB200, B, 1); break;
+	case i_slll:	shift_op(0xB305, L, 1); break;
+	case i_srl:	shift_op(0xB301, W, -1); break;  /* right: negate count */
+	case i_srlb:	shift_op(0xB200, B, -1); break;
+	case i_srll:	shift_op(0xB305, L, -1); break;
+	case i_sda:	shift_op(0xB303, W, 1); break;   /* dynamic: user provides sign */
+	case i_sdab:	shift_op(0xB202, B, 1); break;
+	case i_sdal:	shift_op(0xB307, L, 1); break;
+	case i_sdl:	shift_op(0xB30B, W, 1); break;
+	case i_sdlb:	shift_op(0xB20A, B, 1); break;
+	case i_sdll:	shift_op(0xB30F, L, 1); break;
 	case i_rl:	rotate_op(0xB300, W); break;
 	case i_rlb:	rotate_op(0xB200, B); break;
 	case i_rlc:	rotate_op(0xB308, W); break;
@@ -1105,7 +1105,7 @@ inc_dec(opr, size)
 	if (op2->type_o != t_immed) { Prog_Error(E_OPERAND); return; }
 	n = op2->value_o;
 	if (n < 1 || n > 16) Prog_Error(E_CONSTANT);
-	if (n == 16) n = 0;	/* 0 encodes 16 */
+	n = (n - 1) & 0x0F;	/* encode n-1: 1→0, 2→1, ..., 16→15 */
 
 	/* reg, #n: R mode */
 	if (op1->type_o == t_reg) {
@@ -1165,8 +1165,9 @@ bit_op(opr, size)
 
 /* shift_op -- static shift: sla/sra/sll/srl/sda/sdl etc.
  * Form: reg, #count  (count is signed for sda/sdl)
+ * sign: 1 = left (positive count), -1 = right (negate count)
  */
-shift_op(opr, size)
+shift_op(opr, size, sign)
 {
 	register struct oper *op1, *op2;
 	int rf, count;
@@ -1179,8 +1180,7 @@ shift_op(opr, size)
 	rf = regfield(op1->value_o);
 
 	if (op2->type_o == t_immed) {
-		count = op2->value_o;
-		/* right shifts encode count as negative in the sda/sdl variants */
+		count = op2->value_o * sign;
 		WCode[0] = opr | (rf << 4);
 		WCode[1] = count & 0xFFFF;
 		Code_length = 4;

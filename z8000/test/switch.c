@@ -1,41 +1,44 @@
-/* test switch statement code generation */
+/* switch.c -- dense table jump + sparse binary search */
 
-int small_switch(x) int x; {
-	switch(x) {
-	case 1: return 10;
-	case 2: return 20;
-	case 3: return 30;
+/* dense switch: cases 0-4 contiguous */
+dense(n)
+int n;
+{
+	switch (n) {
+	case 0: return 10;
+	case 1: return 20;
+	case 2: return 30;
+	case 3: return 40;
+	case 4: return 50;
 	default: return -1;
 	}
 }
 
-/* dense switch — should use table jump */
-int dense_switch(x) int x; {
-	switch(x) {
-	case 0: return 100;
-	case 1: return 101;
-	case 2: return 102;
-	case 3: return 103;
-	case 4: return 104;
-	case 5: return 105;
-	default: return -1;
+/* sparse switch: widely separated values */
+sparse(n)
+int n;
+{
+	switch (n) {
+	case 1:   return 100;
+	case 50:  return 200;
+	case 100: return 300;
+	case 500: return 400;
+	default:  return -1;
 	}
 }
 
-/* sparse switch — should use binary search */
-int sparse_switch(x) int x; {
-	switch(x) {
-	case 1:   return 1;
-	case 10:  return 2;
-	case 100: return 3;
-	case 1000: return 4;
-	default: return 0;
-	}
-}
+main()
+{
+	if (dense(0) != 10) return 1;
+	if (dense(3) != 40) return 2;
+	if (dense(4) != 50) return 3;
+	if (dense(7) != -1) return 4;
 
-main() {
-	small_switch(2);
-	dense_switch(3);
-	sparse_switch(100);
+	if (sparse(1) != 100) return 5;
+	if (sparse(50) != 200) return 6;
+	if (sparse(100) != 300) return 7;
+	if (sparse(500) != 400) return 8;
+	if (sparse(999) != -1) return 9;
+
 	return 0;
 }

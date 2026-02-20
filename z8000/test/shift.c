@@ -1,42 +1,35 @@
-/* test shift operations for word and long types */
+/* shift.c -- word and long shifts */
 
-long x;
+main()
+{
+	int w;
+	long l;
 
-long shl(v, n) long v; int n; {
-	return v << n;
-}
+	/* word left shift */
+	w = 1;
+	w = w << 4;
+	if (w != 16) return 1;
 
-long shr_signed(v, n) long v; int n; {
-	return v >> n;
-}
+	/* word right shift (arithmetic on signed) */
+	w = -16;
+	w = w >> 2;
+	if (w != -4) return 2;
 
-unsigned long shr_unsigned(v, n) unsigned long v; int n; {
-	return v >> n;
-}
+	/* word unsigned right shift via unsigned */
+	w = 1 << 15;
+	w = (w >> 14) & 3;
+	/* arithmetic right shift of 0x8000 >> 14 = 0xFFFE, & 3 = 2 */
+	if (w != 2) return 3;
 
-long shl_const(v) long v; {
-	return v << 4;
-}
+	/* long left shift */
+	l = 1;
+	l = l << 16;
+	if (l != 65536) return 4;
 
-long shr_const(v) long v; {
-	return v >> 8;
-}
+	/* long right shift */
+	l = 65536;
+	l = l >> 8;
+	if (l != 256) return 5;
 
-int word_shl(v, n) int v; int n; {
-	return v << n;
-}
-
-int word_shr(v, n) int v; int n; {
-	return v >> n;
-}
-
-main() {
-	x = shl(100L, 3);
-	x = shr_signed(-1000L, 2);
-	x = shr_unsigned(0xFFFF0000, 16);
-	x = shl_const(1L);
-	x = shr_const(0x12340000);
-	word_shl(1, 5);
-	word_shr(256, 3);
 	return 0;
 }

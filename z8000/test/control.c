@@ -1,53 +1,45 @@
-int abs(x) int x; {
-	if (x < 0) return -x;
-	return x;
-}
-
-int sum(n) int n; {
-	int s, i;
-	s = 0;
-	for (i = 1; i <= n; i++)
-		s = s + i;
-	return s;
-}
-
-int fib(n) int n; {
-	int a, b, t, i;
-	a = 0;
-	b = 1;
-	for (i = 0; i < n; i++) {
-		t = a + b;
-		a = b;
-		b = t;
-	}
-	return a;
-}
-
+/* control.c -- loops, pointers, arrays, structs */
 struct point {
 	int x;
 	int y;
 };
 
-int dist2(p) struct point *p; {
-	return p->x * p->x + p->y * p->y;
+sum_array(a, n)
+int *a;
+int n;
+{
+	int s;
+	s = 0;
+	while (n-- > 0)
+		s = s + *a++;
+	return s;
 }
 
-int arr[10];
-
-fill(n) int n; {
+main()
+{
+	int arr[5];
+	struct point p;
 	int i;
-	for (i = 0; i < n; i++)
-		arr[i] = i * i;
-}
+	int total;
 
-main() {
-	struct point pt;
-	abs(-5);
-	sum(100);
-	fib(10);
-	pt.x = 3;
-	pt.y = 4;
-	dist2(&pt);
-	fill(10);
+	/* fill array with 1..5 using a for loop */
+	for (i = 0; i < 5; i++)
+		arr[i] = i + 1;
+
+	total = sum_array(arr, 5);	/* 15 */
+	if (total != 15)
+		return 1;
+
+	/* struct access */
+	p.x = 10;
+	p.y = 20;
+	if (p.x + p.y != 30)
+		return 2;
+
+	/* pointer to struct member */
+	i = *(&p.y);
+	if (i != 20)
+		return 3;
+
 	return 0;
 }
