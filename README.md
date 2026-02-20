@@ -15,7 +15,9 @@ z8000/
 ├── crt0.az8      # C runtime startup
 ├── b.out.h       # object file format header
 ├── include/      # target headers (varargs.h)
-└── test/         # test programs
+├── lib/          # runtime library (arith.az8 — 32-bit multiply/divide/modulo)
+└── test/         # 15 end-to-end test programs
+pcc-tests/        # submodule: PCC test suite (source for adapted tests)
 ```
 
 ## Build
@@ -36,12 +38,21 @@ cd z8000 && cc -O -w -Wno-implicit-int -Wno-implicit-function-declaration -Wno-r
 - **Phase 3**: Instruction templates written (`table.c`)
 - **Phase 4**: Z8000 assembler (`az8`) written and builds
 - **Phase 5**: Driver (`ccz8.c`), linker (`ldz8.c`), and runtime (`crt0.az8`) written and build
-- **Phase 6**: Testing — 6 end-to-end tests compile → assemble → link → execute on Z8002 emulator
+- **Phase 6**: Testing — 15 end-to-end tests compile → assemble → link → execute on Z8002 emulator
 
 All four binaries (`cz8`, `az8`, `ccz8`, `ldz8`) compile and link successfully.
-Six test programs execute correctly on the Z8002 emulator (`cd z8000/test && make`):
+15 test programs execute correctly on the Z8002 emulator (`cd z8000/test && make`):
+
+**Core tests** (7):
 `hello.c` (return 42), `arith.c` (recursive factorial), `control.c` (loops/pointers/arrays/structs),
-`switch.c` (dense table jump + sparse binary search), `bitfield.c` (read/write), `shift.c` (word + long shifts).
+`switch.c` (dense table jump + sparse binary search), `bitfield.c` (read/write), `shift.c` (word + long shifts),
+`larith.c` (32-bit signed/unsigned multiply, divide, modulo).
+
+**Adapted from pcc-tests** (8):
+`pcc_math.c` (int div/mod/xor/or/and), `pcc_cmp.c` (systematic signed + unsigned comparisons),
+`pcc_struct.c` (struct assignment from local/global/static), `pcc_structret.c` (struct return from function),
+`pcc_union.c` (union pass-by-value + address-of parameter), `pcc_ptr.c` (pointer arrays + indexing),
+`pcc_scope.c` (variable scoping + shadowing), `pcc_optim.c` (constant folding + dead code + loop with multiply).
 
 ### Fixes applied during Phase 6
 
@@ -65,21 +76,24 @@ Six test programs execute correctly on the Z8002 emulator (`cd z8000/test && mak
 - `local2.c`: added ZQ escape to print register pair name for left operand
 - `include/varargs.h`: added K&R-style variadic function support header
 
-**Runtime (`crt0.az8`):**
-- Fixed `_main`/`_exit` → `main`/`exit` (compiler does not prepend underscore to C symbols)
+**Assembler (`az8`) — pseudo-ops:**
+- `ps.c`/`init.c`/`inst.h`/`ins.c`: added `.zerow` pseudo-op (zero N words) — compiler emits this for zero-initialized word-sized static data; `.zerol` (zero N longs) already existed
+
+**Runtime:**
+- `crt0.az8`: fixed `_main`/`_exit` → `main`/`exit` (compiler does not prepend underscore to C symbols)
+- `lib/arith.az8`: 32-bit arithmetic runtime library — `lmul`/`ulmul` (signed/unsigned multiply), `ldiv`/`uldiv` (divide), `lrem`/`ulrem` (remainder), plus assignment variants (`almul`, `aldiv`, `alrem`, `aulmul`, `auldiv`, `aulrem`). Unsigned ops use a fast path (two hardware DIV instructions) when divisor < 32768, otherwise binary long division (32 iterations)
 
 ### Known gaps (not yet implemented)
 
 **High priority — blocks real programs:**
-- **Long multiply/divide** — compiler emits `lmul`, `ldiv`, `lrem`, `ulmul`, `uldiv`, `ulrem` library calls for 32-bit `*`, `/`, `%`; none implemented; 16-bit multiply/divide works via hardware MULT/DIV
-- **Float/double** — all ops emit library calls (`fadd`, `fsub`, `fmul`, `fdiv`, `fneg`, `float`, `fix`); none implemented
+- **Float/double** — all ops emit library calls (`fadd`, `fsub`, `fmul`, `fdiv`, `fneg`, `float`, `fix` plus assignment variants); none implemented
 
-**Medium priority — assembler encoding bugs (not emitted by compiler):**
+**Medium priority — assembler encoding bugs (not emitted by compiler, affect hand-written assembly):**
 - **BIT/SET/RES register mode** — `bit_op()` uses IR-mode opcodes for R-mode operands; `bitb rl0,#0` → `2680` instead of correct `A680`
 - **DJNZ offset** — uses 4-bit offset field instead of 7-bit
 
-**Low priority:**
-- Linker prints cosmetic "Undefined" warnings for local labels that are actually resolved
+**Low priority — cosmetic:**
+- Linker prints "Undefined" warnings for local labels that are actually resolved; output is correct
 - No standard library headers beyond `varargs.h`
 
 ## Key Technical Details
