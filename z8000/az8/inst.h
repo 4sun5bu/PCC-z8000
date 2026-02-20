@@ -222,3 +222,4 @@
 #define i_ascii 209
 #define i_asciz 210
 #define i_zerol 211
+#define i_zerow 212

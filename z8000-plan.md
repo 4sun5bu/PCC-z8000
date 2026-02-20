@@ -184,12 +184,17 @@ z8000/
 25. ✓ **Test control flow**: if/else, while, for, switch all work (dense table jump and sparse binary search)
 26. ✓ **Test pointers and arrays**: basic indirection works; bitfield read/write tested
 27. ✓ **Test function calls**: word and long args work; struct return works (STCALL via genscall/gencall)
-28. ✓ **End-to-end emulator execution**: 6 test programs compile → assemble → link → execute on Z8002 emulator and return correct results. Test driver (`z8000/test/run_emu.cpp`) loads b.out binaries into the `z8000_emu` emulator, runs them, and checks R0 return value. Tests: hello (return 42), arith (recursive factorial), control (loops/pointers/arrays/structs), switch (dense table + sparse binary search), bitfield (read/write), shift (word + long shifts).
+28. ✓ **End-to-end emulator execution**: 15 test programs compile → assemble → link → execute on Z8002 emulator and return correct results. Test driver (`z8000/test/run_emu.cpp`) loads b.out binaries into the `z8000_emu` emulator, runs them, and checks R0 return value.
+
+**Core tests** (7): hello (return 42), arith (recursive factorial), control (loops/pointers/arrays/structs), switch (dense table + sparse binary search), bitfield (read/write), shift (word + long shifts), larith (32-bit multiply/divide/modulo).
+
+**pcc-tests adapted** (8, from `pcc-tests/tests/c/`): pcc_math (int div/mod/xor/or/and), pcc_cmp (systematic signed + unsigned comparisons), pcc_struct (struct assignment from local/global/static), pcc_structret (struct return from function), pcc_union (union pass by value + address-of parameter), pcc_ptr (pointer arrays + indexing), pcc_scope (variable scoping + shadowing), pcc_optim (constant folding + dead code + loop with multiply).
 
 #### Bugs found and fixed during Phase 6:
 - Assembler: `sopcode()` fallback, `!` comment char, `exts` size, indexed MULT/DIV, memory-immediate CP
 - Assembler: INC/DEC count field off-by-one (stored n instead of n-1; validated against z8k-coff-as)
 - Assembler: SRL/SRA/SRLL/SRAL right-shift count not negated (Z8000 uses signed count; validated against z8k-coff-as)
+- Assembler: `.zerow` pseudo-op missing — compiler emits `.zerow N` for zero-initialized word-sized static data; assembler had `.zerol` (zero longs) but not `.zerow`; added `Zerow()` handler
 - Runtime: crt0.az8 referenced `_main`/`_exit` but compiler emits `main`/`exit` (no underscore prefix)
 - Compiler: INTEMP mem-to-mem, INCR/DECR operand order, callee-saved register saves, `tymatch()` missing LONG case, SCONV template shapes, LONG↔ULONG template, `cbgen()` double-free, `genswitch()` R0 indirect bug, bitfield assign memory-dest AND/OR
 
@@ -200,14 +205,14 @@ z8000/
 - **Struct-valued returns (STCALL)** — already handled: `genscall()` delegates to `gencall()` (rewrites to UNARY CALL); `efcode()` copies return value to static area
 - **Bitfield reads** — already worked via shift-right + AND mask in register; only bitfield writes had bugs (memory-dest AND/OR)
 - **Long shifts** — Z8000 has hardware long shifts (`slal`/`sral`/`srll`/`sdal`/`sdll`); templates were simply missing from table.c
-- **Assembler pseudo-ops** — `.=.+N` (space), `.even` (align), and symbol assignment already supported; compiler doesn't generate `.space`/`.align`/`.fill`
+- **Assembler pseudo-ops** — `.=.+N` (space), `.even` (align), and symbol assignment already supported; compiler doesn't generate `.space`/`.align`/`.fill`. Full pseudo-op set: `.byte`, `.word`, `.long`, `.text`, `.data`, `.bss`, `.globl`, `.comm`, `.even`, `.ascii`, `.asciz`, `.zerol`, `.zerow`
 - **Variadic functions** — stack-based calling convention works naturally; added `include/varargs.h` header
 - **Linker** — works for current use; weak symbols and validation are low-priority features no PCC port implements
 
 ### Phase 7: Remaining Work
 
 **High priority — blocks real programs:**
-- Long multiply/divide runtime library (`lmul`, `ldiv`, `lrem`, `ulmul`, `uldiv`, `ulrem`) — the compiler emits calls to these for all 32-bit `*`, `/`, `%` operations; any program using long arithmetic beyond add/sub/shift will fail to link
+- ✓ Long multiply/divide runtime library (`lmul`, `ldiv`, `lrem`, `ulmul`, `uldiv`, `ulrem` plus assignment variants `almul`, `aldiv`, `alrem`, `aulmul`, `auldiv`, `aulrem`) — implemented in `z8000/lib/arith.az8`; tested via `z8000/test/larith.c` with signed/unsigned multiply, divide, modulo, fast-path (two-DIV) and slow-path (binary long division) unsigned division
 - Float/double software library — all float/double ops emit calls to `fadd`, `fsub`, `fmul`, `fdiv`, `fneg`, `float` (int→float), `fix` (float→int) plus assignment variants (`afadd`, etc.); none are implemented
 
 **Medium priority — assembler encoding bugs (not used by compiler, affect hand-written assembly):**

@@ -116,7 +116,20 @@ Zerol()
 	  Put_Words(&zero,4);
 	  BC += 4;
 	}
-}	
+}
+
+/* .zerow -- initialize specified number of words to 0 */
+Zerow()
+  {	register int i;
+	short zero = 0;
+
+	if (numops!=1 || operands[0].type_o!=t_normal || operands[0].sym_o!=NULL)
+	  { Prog_Error(E_OPERAND); return; }
+	for (i = operands[0].value_o; i > 0; i--) {
+	  Put_Words(&zero,2);
+	  BC += 2;
+	}
+}
 
 struct csect Csects[CSECT_MAX] = {
   ".text",0,0,0,R_ISPC|R_PURE,	/* text csect */

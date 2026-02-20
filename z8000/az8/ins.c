@@ -349,6 +349,9 @@ Instruction(opindex)
 	case i_zerol:	if (Dot & 1) Prog_Error(E_ODDADDR);
 			Zerol();
 			goto pseudo;
+	case i_zerow:	if (Dot & 1) Prog_Error(E_ODDADDR);
+			Zerow();
+			goto pseudo;
 
 	pseudo:		Code_length = 0;
 			break;
@@ -1155,10 +1158,10 @@ bit_op(opr, size)
 	if (op2->type_o == t_immed) {
 		/* static bit: bit number in imm4 */
 		if (op2->value_o < 0 || op2->value_o > 15) Prog_Error(E_CONSTANT);
-		WCode[0] = opr | (regfield(op1->value_o) << 4) | (op2->value_o & 0x0F);
+		WCode[0] = (opr | 0x8000) | (regfield(op1->value_o) << 4) | (op2->value_o & 0x0F);
 	} else if (op2->type_o == t_reg) {
 		/* dynamic bit: bit number in register */
-		WCode[0] = opr | (regfield(op1->value_o) << 4) | regfield(op2->value_o);
+		WCode[0] = (opr | 0x8000) | (regfield(op1->value_o) << 4) | regfield(op2->value_o);
 	} else Prog_Error(E_OPERAND);
 }
 
@@ -1492,10 +1495,9 @@ djnz_op(opr, size)
 	offs = op2->value_o - (Dot + 2);
 	if (offs > 0 || offs < -254 || (offs & 1)) Prog_Error(E_OFFSET);
 
-	if (size == B)
-		WCode[0] = 0xF200 | (regfield(op1->value_o) << 4) | (((-offs) >> 1) & 0x0F);
-	else
-		WCode[0] = 0xF300 | (regfield(op1->value_o) << 4) | (((-offs) >> 1) & 0x0F);
+	WCode[0] = 0xF000 | (regfield(op1->value_o) << 8)
+		 | (size == B ? 0 : 0x80)
+		 | (((-offs) >> 1) & 0x7F);
 }
 
 

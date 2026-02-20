@@ -219,6 +219,7 @@ struct ins_init { char *opstr; short opnum; } op_codes[] = {
 	".asciz", i_asciz,
 	".ascii", i_ascii,
 	".zerol", i_zerol,
+	".zerow", i_zerow,
 	0 };
 
 char *Source_name = NULL;
