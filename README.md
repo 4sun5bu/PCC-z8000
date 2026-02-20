@@ -36,16 +36,20 @@ cd z8000 && cc -O -w -Wno-implicit-int -Wno-implicit-function-declaration -Wno-r
 - **Phase 3**: Instruction templates written (`table.c`)
 - **Phase 4**: Z8000 assembler (`az8`) written and builds
 - **Phase 5**: Driver (`ccz8.c`), linker (`ldz8.c`), and runtime (`crt0.az8`) written and build
-- **Phase 6**: Testing — 11 test programs compile through `cz8` and assemble through `az8` end-to-end
+- **Phase 6**: Testing — 6 end-to-end tests compile → assemble → link → execute on Z8002 emulator
 
 All four binaries (`cz8`, `az8`, `ccz8`, `ldz8`) compile and link successfully.
-Eleven test programs compile and assemble without errors: `hello.c`, `arith.c`, `control.c`, `switch.c`, `bitfield.c`, `shift.c`, `t.c`, `t6.c`, `t3.c`, `x.c`.
+Six test programs execute correctly on the Z8002 emulator (`cd z8000/test && make`):
+`hello.c` (return 42), `arith.c` (recursive factorial), `control.c` (loops/pointers/arrays/structs),
+`switch.c` (dense table jump + sparse binary search), `bitfield.c` (read/write), `shift.c` (word + long shifts).
 
 ### Fixes applied during Phase 6
 
 **Assembler (`az8`):**
 - `scan.c`: fixed `sopcode()` compound opcode fallback bug, added `!` as comment char
 - `ins.c`: fixed `exts` to use size L; added `t_x` indexed addressing to `mult_op`/`div_op`; added memory-immediate compare to `alu_op`
+- `ins.c`: fixed INC/DEC count encoding (stored n instead of n-1 in 4-bit field; validated against z8k-coff-as)
+- `ins.c`: fixed SRL/SRA/SRLL/SRAL right-shift count not negated (Z8000 uses signed 16-bit count; validated against z8k-coff-as)
 
 **Compiler backend (`cz8`):**
 - `local2.c`: changed `ccbranches[]` to `"jr eq,.L%d"` compound opcode format
@@ -61,13 +65,22 @@ Eleven test programs compile and assemble without errors: `hello.c`, `arith.c`, 
 - `local2.c`: added ZQ escape to print register pair name for left operand
 - `include/varargs.h`: added K&R-style variadic function support header
 
+**Runtime (`crt0.az8`):**
+- Fixed `_main`/`_exit` → `main`/`exit` (compiler does not prepend underscore to C symbols)
+
 ### Known gaps (not yet implemented)
 
-**High severity:**
-- **Float/double** — all ops redirected to library calls (`fadd`, `fsub`, etc.) which don't exist yet; no float constants or comparisons
+**High priority — blocks real programs:**
+- **Long multiply/divide** — compiler emits `lmul`, `ldiv`, `lrem`, `ulmul`, `uldiv`, `ulrem` library calls for 32-bit `*`, `/`, `%`; none implemented; 16-bit multiply/divide works via hardware MULT/DIV
+- **Float/double** — all ops emit library calls (`fadd`, `fsub`, `fmul`, `fdiv`, `fneg`, `float`, `fix`); none implemented
 
-**Medium severity:**
-- **Long multiply/divide** — uses library calls (`lmul`, `ulmul`, etc.) which don't exist yet; 16-bit works
+**Medium priority — assembler encoding bugs (not emitted by compiler):**
+- **BIT/SET/RES register mode** — `bit_op()` uses IR-mode opcodes for R-mode operands; `bitb rl0,#0` → `2680` instead of correct `A680`
+- **DJNZ offset** — uses 4-bit offset field instead of 7-bit
+
+**Low priority:**
+- Linker prints cosmetic "Undefined" warnings for local labels that are actually resolved
+- No standard library headers beyond `varargs.h`
 
 ## Key Technical Details
 

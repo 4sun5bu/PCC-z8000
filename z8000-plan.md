@@ -184,10 +184,13 @@ z8000/
 25. ✓ **Test control flow**: if/else, while, for, switch all work (dense table jump and sparse binary search)
 26. ✓ **Test pointers and arrays**: basic indirection works; bitfield read/write tested
 27. ✓ **Test function calls**: word and long args work; struct return works (STCALL via genscall/gencall)
-28. **End-to-end**: compile → assemble works; link → binary execution not yet tested on target
+28. ✓ **End-to-end emulator execution**: 6 test programs compile → assemble → link → execute on Z8002 emulator and return correct results. Test driver (`z8000/test/run_emu.cpp`) loads b.out binaries into the `z8000_emu` emulator, runs them, and checks R0 return value. Tests: hello (return 42), arith (recursive factorial), control (loops/pointers/arrays/structs), switch (dense table + sparse binary search), bitfield (read/write), shift (word + long shifts).
 
 #### Bugs found and fixed during Phase 6:
 - Assembler: `sopcode()` fallback, `!` comment char, `exts` size, indexed MULT/DIV, memory-immediate CP
+- Assembler: INC/DEC count field off-by-one (stored n instead of n-1; validated against z8k-coff-as)
+- Assembler: SRL/SRA/SRLL/SRAL right-shift count not negated (Z8000 uses signed count; validated against z8k-coff-as)
+- Runtime: crt0.az8 referenced `_main`/`_exit` but compiler emits `main`/`exit` (no underscore prefix)
 - Compiler: INTEMP mem-to-mem, INCR/DECR operand order, callee-saved register saves, `tymatch()` missing LONG case, SCONV template shapes, LONG↔ULONG template, `cbgen()` double-free, `genswitch()` R0 indirect bug, bitfield assign memory-dest AND/OR
 
 #### Resolved during investigation (not actual gaps):
@@ -203,11 +206,17 @@ z8000/
 
 ### Phase 7: Remaining Work
 
-**High priority:**
-- Float/double software library (or at minimum stubs)
+**High priority — blocks real programs:**
+- Long multiply/divide runtime library (`lmul`, `ldiv`, `lrem`, `ulmul`, `uldiv`, `ulrem`) — the compiler emits calls to these for all 32-bit `*`, `/`, `%` operations; any program using long arithmetic beyond add/sub/shift will fail to link
+- Float/double software library — all float/double ops emit calls to `fadd`, `fsub`, `fmul`, `fdiv`, `fneg`, `float` (int→float), `fix` (float→int) plus assignment variants (`afadd`, etc.); none are implemented
 
-**Medium priority:**
-- Long multiply/divide runtime library (`lmul`, `ldiv`, `lrem`, `ulmul`, `uldiv`, `ulrem`)
+**Medium priority — assembler encoding bugs (not used by compiler, affect hand-written assembly):**
+- BIT/SET/RES register mode — `bit_op()` uses IR-mode base opcodes (0x2700) but never adds 0x8000 for R mode; `bitb rl0,#0` encodes as `2680` instead of correct `A680`
+- DJNZ offset encoding — uses only 4 bits for a 7-bit displacement field
+
+**Low priority — cosmetic / completeness:**
+- Linker "Undefined" warnings — prints warnings for local labels (`.lbzloop`, `.l12`, `_f1`) that are actually resolved; output works correctly; cosmetic only
+- Standard library headers — only `varargs.h` exists; no stdio.h, stdlib.h, string.h (acceptable for bare-metal cross-compiler)
 
 ## Key Technical Risks
 
