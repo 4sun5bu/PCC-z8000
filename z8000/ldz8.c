@@ -390,7 +390,7 @@ sym1()
 	{
 		if (xflag || (Xflag && (cursym.sname[0] == '.')
 			&& (cursym.sname[1] == 'L')));
-		else nloc += sizeof(cursym.s.stype)+sizeof(cursym.s.svalue) +
+		else nloc += SYM_DISKSIZE +
 			     cursym.snlength + 1;
 		return(0);
 	}
@@ -479,7 +479,7 @@ common()
 sym2(sp)
 register symp sp;
 {
-	ssize += sizeof(sp->s.stype)+sizeof(sp->s.svalue) + sp->snlength + 1;
+	ssize += SYM_DISKSIZE + sp->snlength + 1;
 	switch (sp->s.stype)
 	{
 	case EXTERN+UNDEF:
@@ -701,7 +701,7 @@ long rsize;		/* size of appropriate relocation data */
 	long rcount;			/* number of relocation commands */
 	long pos = 0;			/* current input position */
 
-	rcount = rsize/sizeof rel;
+	rcount = rsize/RELOC_DISKSIZE;
 	while(rcount--)			/* for each relocation command */
 	{
 		if (pos >= txtsize) bletch("relocation after end of segment");
@@ -828,7 +828,7 @@ finishout()
 {
 	register symp sp;
 
-	fseek(tout, sizeof(filhdr) + tsize + dsize, 0);
+	fseek(tout, (long)(BHDR_DISKSIZE + tsize + dsize), 0);
 	if (sflag == 0) for (sp = symtab; sp < &symtab[symindex]; sp++)
 	{
 		register int i;
@@ -1054,12 +1054,11 @@ long getsym()
 		{
 			if ((cursym.snlength = i) == 0) fatal(e18, filename);
 			cursym.sname = csymbuf;
-			return(sizeof(cursym.s.stype)+sizeof(cursym.s.svalue) +
-			       i + 1);
+			return(SYM_DISKSIZE + i + 1);
  		}
 	}
 	csymbuf[SYMLENGTH] = '\0';	/* make sure asciz */
-	return(sizeof(cursym.s.stype)+sizeof(cursym.s.svalue) + i);
+	return(SYM_DISKSIZE + i);
 }
 
 /* error -	Print out error messages and give up if they are severe. */

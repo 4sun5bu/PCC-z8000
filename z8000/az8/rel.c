@@ -26,12 +26,12 @@ Rel_Header()
 	long Sym_Write();
 
 	if ((tout = fopen(Rel_name, "w")) == NULL ||
-		(dout = fopen(Rel_name, "a")) == NULL)
+		(dout = fopen(Rel_name, "r+")) == NULL)
 		Sys_Error("open on output file %s failed", Rel_name);
 
 	Concat(rname, Source_name, ".tmpr");
 	if ((rtout = fopen(rname, "w")) == NULL
-	 || (rdout = fopen(rname, "a")) == NULL)
+	 || (rdout = fopen(rname, "r+")) == NULL)
 		Sys_Error("open on output file %s failed", rname);
 	filhdr.fmagic = FMAGIC;
 	filhdr.tsize = tsize;
@@ -248,5 +248,5 @@ FILE *file;
 		put68(file, &rp->rsymbol, sizeof(rp->rsymbol));
 		put68(file, &rp->rpos, sizeof(rp->rpos));
 	}
-	return(sizeof *rp);
+	return(RELOC_DISKSIZE);
 }

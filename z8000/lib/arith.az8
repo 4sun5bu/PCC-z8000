@@ -1,0 +1,149 @@
+! Long (32-bit) arithmetic library for PCC-z8000
+!
+! Calling convention: args pushed right-to-left on stack (4 bytes each)
+! Return value in RR0 (R0=high, R1=low)
+! Stack cleaned by caller (add sp, #8)
+!
+! Stack layout at function entry:
+!   sp+0: return address (2 bytes)
+!   sp+2: left operand high word
+!   sp+4: left operand low word
+!   sp+6: right operand high word
+!   sp+8: right operand low word
+
+	.text
+
+! uldiv_core - unsigned 32-bit division (internal)
+!
+! Input:  R2:R3 = dividend, R4:R5 = divisor
+! Output: R2:R3 = quotient,  R0:R1 = remainder
+! Uses:   R6 (loop counter, must be saved by caller)
+!
+! Algorithm: shift-and-subtract (restoring)
+uldiv_core:
+	clr	r0
+	clr	r1
+	ld	r6, #32
+.udloop:
+	! shift dividend left, MSB goes to carry
+	slal	rr2, #1
+	! shift carry into remainder
+	rl	r1, #1
+	rl	r0, #1
+	! compare remainder >= divisor
+	cp	r0, r4
+	jr ult,	.udskip
+	jr ugt,	.udsub
+	cp	r1, r5
+	jr ult,	.udskip
+.udsub:
+	! remainder -= divisor
+	sub	r1, r5
+	sbc	r0, r4
+	! set quotient bit (bit 0 of R3, was shifted in as 0)
+	or	r3, #1
+.udskip:
+	dec	r6, #1
+	jr ne,	.udloop
+	ret
+
+! ldiv - signed 32-bit division, return quotient
+	.globl	ldiv
+ldiv:
+	push	@sp, r4
+	push	@sp, r5
+	push	@sp, r6
+	push	@sp, r7
+	! sp+8=retaddr, sp+10=dividend_hi, sp+12=dividend_lo
+	!               sp+14=divisor_hi,  sp+16=divisor_lo
+	ld	r2, 10(sp)
+	ld	r3, 12(sp)
+	ld	r4, 14(sp)
+	ld	r5, 16(sp)
+	! r7 bit 15 = sign of quotient (XOR of operand signs)
+	ld	r7, r2
+	xor	r7, r4
+	! make dividend positive
+	test	r2
+	jr pl,	.ld_dpos
+	com	r2
+	com	r3
+	add	r3, #1
+	jr nc,	.ld_dpos
+	add	r2, #1
+.ld_dpos:
+	! make divisor positive
+	test	r4
+	jr pl,	.ld_spos
+	com	r4
+	com	r5
+	add	r5, #1
+	jr nc,	.ld_spos
+	add	r4, #1
+.ld_spos:
+	call	uldiv_core
+	! R2:R3 = quotient, R0:R1 = remainder
+	! negate quotient if sign bit set
+	test	r7
+	jr pl,	.ld_done
+	com	r2
+	com	r3
+	add	r3, #1
+	jr nc,	.ld_done
+	add	r2, #1
+.ld_done:
+	ld	r0, r2
+	ld	r1, r3
+	pop	r7, @sp
+	pop	r6, @sp
+	pop	r5, @sp
+	pop	r4, @sp
+	ret
+
+! lrem - signed 32-bit division, return remainder
+	.globl	lrem
+lrem:
+	push	@sp, r4
+	push	@sp, r5
+	push	@sp, r6
+	push	@sp, r7
+	ld	r2, 10(sp)
+	ld	r3, 12(sp)
+	ld	r4, 14(sp)
+	ld	r5, 16(sp)
+	! r7 bit 15 = sign of remainder (= sign of dividend)
+	ld	r7, r2
+	! make dividend positive
+	test	r2
+	jr pl,	.lr_dpos
+	com	r2
+	com	r3
+	add	r3, #1
+	jr nc,	.lr_dpos
+	add	r2, #1
+.lr_dpos:
+	! make divisor positive
+	test	r4
+	jr pl,	.lr_spos
+	com	r4
+	com	r5
+	add	r5, #1
+	jr nc,	.lr_spos
+	add	r4, #1
+.lr_spos:
+	call	uldiv_core
+	! R0:R1 = remainder
+	! negate remainder if dividend was negative
+	test	r7
+	jr pl,	.lr_done
+	com	r0
+	com	r1
+	add	r1, #1
+	jr nc,	.lr_done
+	add	r0, #1
+.lr_done:
+	pop	r7, @sp
+	pop	r6, @sp
+	pop	r5, @sp
+	pop	r4, @sp
+	ret

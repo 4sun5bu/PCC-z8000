@@ -153,7 +153,7 @@ long Sym_Write(file)
 	      sp = sbp2->name_s;
 	      slength = 0;
 	      do { putc(*sp,file); slength++; } while (*sp++);
-	      size += (sizeof(s.stype) + sizeof(s.svalue)) + slength;
+	      size += SYM_DISKSIZE + slength;
 	    }
 	return(size);
 }

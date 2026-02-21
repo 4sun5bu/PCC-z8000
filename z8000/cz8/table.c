@@ -156,9 +156,35 @@ OPLTYPE,	FORCC,
 
 OPLTYPE,	FORCC,
 	SANY,	TANY,
+	SBREG,	TWORD,
+		0,	RESCC,
+		"	test	AR\n",
+
+OPLTYPE,	FORCC,
+	SANY,	TANY,
 	SNAME|SOREG,	TWORD,
 		0,	RESCC,
 		"	test	AR\n",
+
+OPLTYPE,	FORCC,
+	SANY,	TANY,
+	SNAME|SOREG,	TCHAR|TUCHAR,
+		0,	RESCC,
+		"	testb	AR\n",
+
+/* test long in temp register pair: or halves to set Z flag */
+OPLTYPE,	FORCC,
+	SANY,	TANY,
+	STAREG,	TLONG|TULONG,
+		0,	RESCC,
+		"	or	AR,UR\n",
+
+/* test long in memory: load high, or with low */
+OPLTYPE,	FORCC,
+	SANY,	TANY,
+	SNAME|SOREG,	TLONG|TULONG,
+		NAREG,	RESCC,
+		"	ld	A1,AR\n	or	A1,UR\n",
 
 /* load zero into register */
 OPLTYPE,	INTAREG|INAREG,
@@ -208,6 +234,20 @@ OPLTYPE,	INTEMP,
 	SNAME|SOREG|STARNM,	TCHAR|TUCHAR,
 		NTEMP,	RESC1,
 		"	ldb	rl0,AR\n	ldb	A1,rl0\n",
+
+/* load long into temp from register or constant */
+OPLTYPE,	INTEMP,
+	SANY,	TANY,
+	SAREG|SCON,	TLONG|TULONG,
+		NTEMP+NTEMP,	RESC1,
+		"	ld	A1,AR\n	ld	U1,UR\n",
+
+/* load long into temp from memory (Z8000 can't do mem-to-mem ld) */
+OPLTYPE,	INTEMP,
+	SANY,	TANY,
+	SNAME|SOREG|STARNM,	TLONG|TULONG,
+		NTEMP+NTEMP,	RESC1,
+		"	ld	r0,AR\n	ld	A1,r0\n	ld	r0,UR\n	ld	U1,r0\n",
 
 /* push word argument - register source */
 OPLTYPE,	FORARG,
@@ -331,6 +371,13 @@ UNARY MINUS,	INTAREG|INAREG,
 		0,	RLEFT,
 		"	negb	AL\n",
 
+/* long negate: com high, com low, add 1 to low, propagate carry */
+UNARY MINUS,	INTAREG|INAREG,
+	STAREG,	TLONG|TULONG,
+	SANY,	TANY,
+		NAREG,	RLEFT,
+		"	com	AL\n	com	UL\n	add	UL,#1\n	clr	A1\n	adc	AL,A1\n",
+
 /* === COMPL (bitwise complement) === */
 
 COMPL,	INTAREG|INAREG,
@@ -360,18 +407,44 @@ DECR,	INTAREG|INAREG|FOREFF,
 		NAREG,	RESC1,
 		"F	ldZB	A1,AL\n	dec	AL,AR\n",
 
-/* post-increment with general constant */
+/* post-increment with general constant - register dest */
 INCR,	INTAREG|INAREG|FOREFF,
-	EAA,	TSCALAR,
+	SAREG|STAREG,	TSCALAR,
 	SCON,	TSCALAR,
 		NAREG,	RESC1,
 		"F	ldZB	A1,AL\n	add	AL,AR\n",
 
 DECR,	INTAREG|INAREG|FOREFF,
-	EAA,	TSCALAR,
+	SAREG|STAREG,	TSCALAR,
 	SCON,	TSCALAR,
 		NAREG,	RESC1,
 		"F	ldZB	A1,AL\n	sub	AL,AR\n",
+
+/* post-increment with general constant - memory dest, effect only */
+INCR,	FOREFF,
+	SNAME|SOREG|STARNM,	TSCALAR,
+	SCON,	TSCALAR,
+		NAREG,	RESC1,
+		"	ld	A1,AL\n	add	A1,AR\n	ld	AL,A1\n",
+
+DECR,	FOREFF,
+	SNAME|SOREG|STARNM,	TSCALAR,
+	SCON,	TSCALAR,
+		NAREG,	RESC1,
+		"	ld	A1,AL\n	sub	A1,AR\n	ld	AL,A1\n",
+
+/* post-increment with general constant - memory dest, need old value */
+INCR,	INTAREG|INAREG,
+	SNAME|SOREG|STARNM,	TSCALAR,
+	SCON,	TSCALAR,
+		NAREG+NAREG,	RESC1,
+		"	ld	A1,AL\n	ld	A2,A1\n	add	A2,AR\n	ld	AL,A2\n",
+
+DECR,	INTAREG|INAREG,
+	SNAME|SOREG|STARNM,	TSCALAR,
+	SCON,	TSCALAR,
+		NAREG+NAREG,	RESC1,
+		"	ld	A1,AL\n	ld	A2,A1\n	sub	A2,AR\n	ld	AL,A2\n",
 
 /* post-increment into breg */
 INCR,	INTBREG|INBREG|FOREFF,
@@ -451,18 +524,18 @@ ASG MINUS,	INAREG|FOREFF,
 		0,	RLEFT,
 		"	subb	AL,AR\n",
 
-/* add/sub: mem op= reg */
+/* add/sub: mem op= src (Z8000 add/sub are reg-dest only, use load/op/store) */
 ASG PLUS,	INAREG|FOREFF,
 	SNAME|SOREG|STARNM,	TWORD,
-	SAREG|STAREG,	TWORD,
-		0,	RLEFT,
-		"	add	AL,AR\n",
+	EA,	TWORD,
+		NAREG,	RLEFT,
+		"	ld	A1,AL\n	add	A1,AR\n	ld	AL,A1\n",
 
 ASG MINUS,	INAREG|FOREFF,
 	SNAME|SOREG|STARNM,	TWORD,
-	SAREG|STAREG,	TWORD,
-		0,	RLEFT,
-		"	sub	AL,AR\n",
+	EA,	TWORD,
+		NAREG,	RLEFT,
+		"	ld	A1,AL\n	sub	A1,AR\n	ld	AL,A1\n",
 
 /* add/sub long: reg op= reg (word by word with carry) */
 ASG PLUS,	INAREG|FOREFF,
@@ -477,46 +550,69 @@ ASG MINUS,	INAREG|FOREFF,
 		0,	RLEFT,
 		"	sub	UL,UR\n	sbc	AL,AR\n",
 
-/* add/sub long: reg op= mem */
+/* add/sub long: reg op= mem (adc/sbc are reg-only, need temp for high word) */
 ASG PLUS,	INAREG|FOREFF,
 	SAREG|STAREG,	TLONG|TULONG,
 	SNAME|SOREG|STARNM,	TLONG|TULONG,
-		0,	RLEFT,
-		"	add	UL,UR\n	adc	AL,AR\n",
+		NAREG,	RLEFT,
+		"	add	UL,UR\n	ld	A1,AR\n	adc	AL,A1\n",
 
 ASG MINUS,	INAREG|FOREFF,
 	SAREG|STAREG,	TLONG|TULONG,
 	SNAME|SOREG|STARNM,	TLONG|TULONG,
-		0,	RLEFT,
-		"	sub	UL,UR\n	sbc	AL,AR\n",
+		NAREG,	RLEFT,
+		"	sub	UL,UR\n	ld	A1,AR\n	sbc	AL,A1\n",
 
-/* add/sub long: reg op= const */
+/* add/sub long: reg op= const (adc/sbc are reg-only, need temp for high word) */
 ASG PLUS,	INAREG|FOREFF,
 	SAREG|STAREG,	TLONG|TULONG,
 	SCON,	TLONG|TULONG,
-		0,	RLEFT,
-		"	add	UL,UR\n	adc	AL,AR\n",
+		NAREG,	RLEFT,
+		"	add	UL,UR\n	ld	A1,AR\n	adc	AL,A1\n",
 
 ASG MINUS,	INAREG|FOREFF,
 	SAREG|STAREG,	TLONG|TULONG,
 	SCON,	TLONG|TULONG,
-		0,	RLEFT,
-		"	sub	UL,UR\n	sbc	AL,AR\n",
+		NAREG,	RLEFT,
+		"	sub	UL,UR\n	ld	A1,AR\n	sbc	AL,A1\n",
 
 /* === ASG OR / ASG AND / ASG ER (exclusive or) === */
 
-/* xor must be separate since Z8000 xor syntax differs */
+/* and long: reg op= src (word by word) */
+ASG AND,	INAREG|FOREFF,
+	SAREG|STAREG,	TLONG|TULONG,
+	EA,	TLONG|TULONG,
+		0,	RLEFT,
+		"	and	AL,AR\n	and	UL,UR\n",
+
+/* or long: reg op= src (word by word) */
+ASG OR,	INAREG|FOREFF,
+	SAREG|STAREG,	TLONG|TULONG,
+	EA,	TLONG|TULONG,
+		0,	RLEFT,
+		"	or	AL,AR\n	or	UL,UR\n",
+
+/* xor long: reg op= src (word by word) */
 ASG ER,	INAREG|FOREFF,
-	EAA,	TWORD,
-	SCON,	TWORD,
+	SAREG|STAREG,	TLONG|TULONG,
+	EA,	TLONG|TULONG,
+		0,	RLEFT,
+		"	xor	AL,AR\n	xor	UL,UR\n",
+
+/* xor must be separate since Z8000 xor syntax differs */
+/* xor: reg op= src */
+ASG ER,	INAREG|FOREFF,
+	SAREG|STAREG,	TWORD,
+	EA,	TWORD,
 		0,	RLEFT,
 		"	xor	AL,AR\n",
 
+/* xor: mem op= src (Z8000 has no mem-dest xor, use load/op/store) */
 ASG ER,	INAREG|FOREFF,
-	EAA,	TWORD,
-	SAREG|STAREG,	TWORD,
-		0,	RLEFT,
-		"	xor	AL,AR\n",
+	SNAME|SOREG|STARNM,	TWORD,
+	SCON|SAREG|STAREG,	TWORD,
+		NAREG,	RLEFT,
+		"	ld	A1,AL\n	xor	A1,AR\n	ld	AL,A1\n",
 
 /* or/and: reg op= src */
 ASG OPSIMP,	INAREG|FOREFF,
@@ -525,19 +621,12 @@ ASG OPSIMP,	INAREG|FOREFF,
 		0,	RLEFT,
 		"	OI	AL,AR\n",
 
-/* or/and: mem op= const */
-ASG OPSIMP,	INAREG|FOREFF,
-	SNAME|SOREG,	TWORD,
-	SCON,	TWORD,
-		0,	RLEFT,
-		"	OI	AL,AR\n",
-
-/* or/and: mem op= reg */
+/* or/and: mem op= src (Z8000 has no mem-dest and/or, use load/op/store) */
 ASG OPSIMP,	INAREG|FOREFF,
 	SNAME|SOREG|STARNM,	TWORD,
-	SAREG|STAREG,	TWORD,
-		0,	RLEFT,
-		"	OI	AL,AR\n",
+	SCON|SAREG|STAREG,	TWORD,
+		NAREG,	RLEFT,
+		"	ld	A1,AL\n	OI	A1,AR\n	ld	AL,A1\n",
 
 /* byte variants */
 ASG ER,	INAREG|FOREFF,
@@ -557,95 +646,95 @@ ASG OPSIMP,	INAREG|FOREFF,
 /* word shift by immediate count */
 ASG LS,	INAREG|FOREFF,
 	SAREG|STAREG,	TWORD,
-	SCON,	TWORD,
+	SCON,	TANY,
 		0,	RLEFT,
 		"	sla	AL,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TINT|TSHORT,
-	SCON,	TWORD,
+	SCON,	TANY,
 		0,	RLEFT,
 		"	sra	AL,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
-	SCON,	TWORD,
+	SCON,	TANY,
 		0,	RLEFT,
 		"	srl	AL,AR\n",
 
 /* word shift by register count (dynamic shift) */
 ASG LS,	INAREG|FOREFF,
 	SAREG|STAREG,	TWORD,
-	SAREG,	TWORD,
+	SAREG,	TANY,
 		0,	RLEFT,
 		"	sda	AL,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TINT|TSHORT,
-	SAREG,	TWORD,
+	SAREG,	TANY,
 		0,	RLEFT,
 		"	negZB	AR\n	sda	AL,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
-	SAREG,	TWORD,
+	SAREG,	TANY,
 		0,	RLEFT,
 		"	negZB	AR\n	sdl	AL,AR\n",
 
 /* long shift by immediate count */
 ASG LS,	INAREG|FOREFF,
 	SAREG|STAREG,	TLONG|TULONG,
-	SCON,	TWORD,
+	SCON,	TANY,
 		0,	RLEFT,
 		"	slal	ZQ,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TLONG,
-	SCON,	TWORD,
+	SCON,	TANY,
 		0,	RLEFT,
 		"	sral	ZQ,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TULONG,
-	SCON,	TWORD,
+	SCON,	TANY,
 		0,	RLEFT,
 		"	srll	ZQ,AR\n",
 
 /* long shift by register count (dynamic) */
 ASG LS,	INAREG|FOREFF,
 	SAREG|STAREG,	TLONG|TULONG,
-	SAREG,	TWORD,
+	SAREG,	TANY,
 		0,	RLEFT,
 		"	sdal	ZQ,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TLONG,
-	SAREG,	TWORD,
+	SAREG,	TANY,
 		0,	RLEFT,
 		"	negZB	AR\n	sdal	ZQ,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TULONG,
-	SAREG,	TWORD,
+	SAREG,	TANY,
 		0,	RLEFT,
 		"	negZB	AR\n	sdll	ZQ,AR\n",
 
 /* byte shift */
 ASG LS,	INAREG|FOREFF,
 	SAREG|STAREG,	TCHAR|TUCHAR,
-	SCON,	TCHAR|TUCHAR,
+	SCON,	TANY,
 		0,	RLEFT,
 		"	slab	AL,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TCHAR,
-	SCON,	TCHAR|TUCHAR,
+	SCON,	TANY,
 		0,	RLEFT,
 		"	srab	AL,AR\n",
 
 ASG RS,	INAREG|FOREFF,
 	SAREG|STAREG,	TUCHAR,
-	SCON,	TCHAR|TUCHAR,
+	SCON,	TANY,
 		0,	RLEFT,
 		"	srlb	AL,AR\n",
 

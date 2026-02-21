@@ -108,6 +108,7 @@ Instruction(opindex)
 	case i_di:	di_ei(0x7C00); break;
 	case i_ei:	di_ei(0x7C04); break;
 	case i_sc:	sc_op(); break;
+	case i_ldctl:	ldctl_op(); break;
 
 /* =================== Load instructions =================== */
 
@@ -144,7 +145,7 @@ Instruction(opindex)
 	case i_neg:	one_dst(0x8D02, W); break;
 	case i_negb:	one_dst(0x8C02, B); break;
 	case i_da:	one_reg(0xB000, W); break;
-	case i_dab:	one_reg(0xB010, B); break;
+	case i_dab:	one_reg(0xB000, B); break;
 
 /* =================== Compare instructions =================== */
 
@@ -180,23 +181,23 @@ Instruction(opindex)
 /* =================== Shift and rotate =================== */
 
 	case i_sla:	shift_op(0xB309, W, 1); break;
-	case i_slab:	shift_op(0xB208, B, 1); break;
+	case i_slab:	shift_op(0xB209, B, 1); break;
 	case i_slal:	shift_op(0xB30D, L, 1); break;
 	case i_sra:	shift_op(0xB309, W, -1); break;  /* right: negate count */
-	case i_srab:	shift_op(0xB208, B, -1); break;
+	case i_srab:	shift_op(0xB209, B, -1); break;
 	case i_sral:	shift_op(0xB30D, L, -1); break;
 	case i_sll:	shift_op(0xB301, W, 1); break;
-	case i_sllb:	shift_op(0xB200, B, 1); break;
+	case i_sllb:	shift_op(0xB201, B, 1); break;
 	case i_slll:	shift_op(0xB305, L, 1); break;
 	case i_srl:	shift_op(0xB301, W, -1); break;  /* right: negate count */
-	case i_srlb:	shift_op(0xB200, B, -1); break;
+	case i_srlb:	shift_op(0xB201, B, -1); break;
 	case i_srll:	shift_op(0xB305, L, -1); break;
-	case i_sda:	shift_op(0xB303, W, 1); break;   /* dynamic: user provides sign */
-	case i_sdab:	shift_op(0xB202, B, 1); break;
-	case i_sdal:	shift_op(0xB307, L, 1); break;
-	case i_sdl:	shift_op(0xB30B, W, 1); break;
-	case i_sdlb:	shift_op(0xB20A, B, 1); break;
-	case i_sdll:	shift_op(0xB30F, L, 1); break;
+	case i_sda:	shift_op(0xB30B, W, 1); break;   /* dynamic: user provides sign */
+	case i_sdab:	shift_op(0xB20B, B, 1); break;
+	case i_sdal:	shift_op(0xB30F, L, 1); break;
+	case i_sdl:	shift_op(0xB303, W, 1); break;
+	case i_sdlb:	shift_op(0xB203, B, 1); break;
+	case i_sdll:	shift_op(0xB307, L, 1); break;
 	case i_rl:	rotate_op(0xB300, W); break;
 	case i_rlb:	rotate_op(0xB200, B); break;
 	case i_rlc:	rotate_op(0xB308, W); break;
@@ -217,7 +218,7 @@ Instruction(opindex)
 
 	case i_exts:	one_reg(0xB10A, L); break;   /* exts rrn: word->long */
 	case i_extsb:	one_reg(0xB100, B); break;   /* extsb rn: byte->word */
-	case i_extsl:	one_reg(0xB10A, L); break;   /* extsl rqn: long->quad */
+	case i_extsl:	one_reg(0xB107, L); break;   /* extsl rqn: long->quad */
 
 /* =================== Clear =================== */
 
@@ -286,21 +287,21 @@ Instruction(opindex)
 
 /* =================== Block transfer =================== */
 
-	case i_ldir:	block_op(0xBB01); break;
-	case i_ldirb:	block_op(0xBA01); break;
-	case i_lddr:	block_op(0xBB09); break;
-	case i_lddrb:	block_op(0xBA09); break;
-	case i_ldi:	block_op(0xBB00); break;
-	case i_ldib:	block_op(0xBA00); break;
-	case i_ldd:	block_op(0xBB08); break;
-	case i_lddb:	block_op(0xBA08); break;
+	case i_ldir:	block_op(0xBB01, 0x00); break;
+	case i_ldirb:	block_op(0xBA01, 0x00); break;
+	case i_lddr:	block_op(0xBB09, 0x00); break;
+	case i_lddrb:	block_op(0xBA09, 0x00); break;
+	case i_ldi:	block_op(0xBB01, 0x08); break;
+	case i_ldib:	block_op(0xBA01, 0x08); break;
+	case i_ldd:	block_op(0xBB09, 0x08); break;
+	case i_lddb:	block_op(0xBA09, 0x08); break;
 
 /* =================== Block compare =================== */
 
-	case i_cpir:	cpblk_op(0xBB02); break;
-	case i_cpirb:	cpblk_op(0xBA02); break;
-	case i_cpdr:	cpblk_op(0xBB0A); break;
-	case i_cpdrb:	cpblk_op(0xBA0A); break;
+	case i_cpir:	cpblk_op(0xBB04); break;
+	case i_cpirb:	cpblk_op(0xBA04); break;
+	case i_cpdr:	cpblk_op(0xBB0C); break;
+	case i_cpdrb:	cpblk_op(0xBA0C); break;
 	case i_cpi:	cpblk_op(0xBB00); break;
 	case i_cpib:	cpblk_op(0xBA00); break;
 	case i_cpd:	cpblk_op(0xBB08); break;
@@ -308,10 +309,10 @@ Instruction(opindex)
 
 /* =================== I/O =================== */
 
-	case i_in:	io_op(0x3D04, W); break;
-	case i_inb:	io_op(0x3C04, B); break;
-	case i_out:	io_op(0x3D06, W); break;
-	case i_outb:	io_op(0x3C06, B); break;
+	case i_in:	io_op(0x3D00, 0x3B04, W); break;
+	case i_inb:	io_op(0x3C00, 0x3A04, B); break;
+	case i_out:	io_op(0x3F00, 0x3B06, W); break;
+	case i_outb:	io_op(0x3E00, 0x3A06, B); break;
 	case i_ind:
 	case i_indb:
 	case i_outd:
@@ -398,6 +399,42 @@ sc_op()
 	else WCode[0] |= (operands[0].value_o & 0xFF);
 }
 
+/* is control register? (fcw=64, refresh=65, psapseg=66, psapoff=67, nspseg=68, nspoff=69) */
+ctrlreg(r) { return(r >= 64 && r <= 69); }
+
+/* control register nibble: fcw=2, refresh=3, psapseg=4, psapoff=5, nspseg=6, nspoff=7 */
+ctrl_code(r) { return(r - 62); }
+
+/* ldctl_op -- LDCTL: load control register
+ * ldctl Rd, ctrl: 0x7D00 | (Rd << 4) | ctrl_code        (read from ctrl)
+ * ldctl ctrl, Rs: 0x7D00 | (Rs << 4) | (ctrl_code + 8)   (write to ctrl)
+ */
+ldctl_op()
+{
+	register struct oper *op1, *op2;
+
+	if (numops != 2) { Prog_Error(E_NUMOPS); return; }
+	op1 = operands;
+	op2 = &operands[1];
+
+	/* ldctl Rd, ctrl */
+	if (op1->type_o == t_reg && wreg(op1->value_o) &&
+	    op2->type_o == t_reg && ctrlreg(op2->value_o)) {
+		WCode[0] = 0x7D00 | (regfield(op1->value_o) << 4) | ctrl_code(op2->value_o);
+		return;
+	}
+
+	/* ldctl ctrl, Rs */
+	if (op1->type_o == t_reg && ctrlreg(op1->value_o) &&
+	    op2->type_o == t_reg && wreg(op2->value_o)) {
+		WCode[0] = 0x7D00 | (regfield(op2->value_o) << 4) | (ctrl_code(op1->value_o) + 8);
+		return;
+	}
+
+	Prog_Error(E_OPERAND);
+}
+
+
 /* one_reg -- single register operand, e.g. neg, com, clr, test, tset, exts, extsb */
 one_reg(opr, size)
 {
@@ -476,7 +513,7 @@ testl_op()
 	register struct oper *op = operands;
 	if (numops != 1) { Prog_Error(E_NUMOPS); return; }
 	if (op->type_o != t_reg || !lreg(op->value_o)) { Prog_Error(E_REG); return; }
-	WCode[0] = 0x9C04 | (regfield(op->value_o) << 4);
+	WCode[0] = 0x9C08 | (regfield(op->value_o) << 4);
 }
 
 
@@ -849,11 +886,11 @@ ldr_op(size)
 	if (op2->type_o == t_reg && op1->type_o == t_normal) {
 		offs = op1->value_o - (Dot + 4);
 		if (size == B)
-			WCode[0] = 0x3800 | (regfield(op2->value_o) << 4);
+			WCode[0] = 0x3200 | (regfield(op2->value_o) << 4);
 		else if (size == W)
-			WCode[0] = 0x3900 | (regfield(op2->value_o) << 4);
+			WCode[0] = 0x3300 | (regfield(op2->value_o) << 4);
 		else /* L */
-			WCode[0] = 0x3D00 | (regfield(op2->value_o) << 4);
+			WCode[0] = 0x3700 | (regfield(op2->value_o) << 4);
 		op1->value_o = offs;
 		op1->sym_o = 0;
 		rel_val(op1, W);
@@ -1160,8 +1197,10 @@ bit_op(opr, size)
 		if (op2->value_o < 0 || op2->value_o > 15) Prog_Error(E_CONSTANT);
 		WCode[0] = (opr | 0x8000) | (regfield(op1->value_o) << 4) | (op2->value_o & 0x0F);
 	} else if (op2->type_o == t_reg) {
-		/* dynamic bit: bit number in register */
-		WCode[0] = (opr | 0x8000) | (regfield(op1->value_o) << 4) | regfield(op2->value_o);
+		/* dynamic bit: bit number in register (2-word instruction) */
+		WCode[0] = opr | regfield(op2->value_o);
+		WCode[1] = regfield(op1->value_o) << 8;
+		Code_length = 4;
 	} else Prog_Error(E_OPERAND);
 }
 
@@ -1417,11 +1456,11 @@ jp_op(opr)
 		if (op->reg_o == 0) { Prog_Error(E_REG); return; }
 		WCode[0] = (opr & 0xFF0F) | (regfield(op->reg_o) << 4);
 	} else if (op->type_o == t_normal) {
-		WCode[0] = (opr & 0xFF0F) | (0 << 4);
+		WCode[0] = ((opr | 0x4000) & 0xFF0F) | (0 << 4);
 		rel_val(op, W);
 	} else if (op->type_o == t_x) {
 		if (op->reg_o == 0) { Prog_Error(E_REG); return; }
-		WCode[0] = (opr & 0xFF0F) | (regfield(op->reg_o) << 4);
+		WCode[0] = ((opr | 0x4000) & 0xFF0F) | (regfield(op->reg_o) << 4);
 		op->value_o = op->disp_o;
 		rel_val(op, W);
 	} else Prog_Error(E_OPERAND);
@@ -1572,8 +1611,10 @@ pop_op(size)
 }
 
 
-/* block_op -- LDIR/LDDR/LDI/LDD: @rd,@rs,rn */
-block_op(opr)
+/* block_op -- LDIR/LDDR/LDI/LDD: @rd,@rs,rn
+ * w2_flags: low nibble OR'd into word 2 (0x00 for repeat, 0x08 for non-repeat)
+ */
+block_op(opr, w2_flags)
 {
 	register struct oper *op1, *op2, *op3;
 
@@ -1590,7 +1631,7 @@ block_op(opr)
 	if (op1->reg_o == 0 || op2->reg_o == 0) { Prog_Error(E_REG); return; }
 
 	WCode[0] = opr | (regfield(op2->reg_o) << 4);
-	WCode[1] = (regfield(op1->reg_o) << 8) | (regfield(op3->value_o) << 4);
+	WCode[1] = (regfield(op1->reg_o) << 8) | (regfield(op3->value_o) << 4) | w2_flags;
 	Code_length = 4;
 }
 
@@ -1618,21 +1659,28 @@ cpblk_op(opr)
 }
 
 
-/* io_op -- IN/INB/OUT/OUTB: reg, @reg or reg, #port */
-io_op(opr, size)
+/* io_op -- IN/INB/OUT/OUTB: data_reg, @port_reg  or  data_reg, #port
+ * r_opr:  R mode opcode (e.g. 0x3D00 for IN)
+ * da_opr: DA mode opcode (e.g. 0x3B04 for IN)
+ * R mode:  WCode[0] = r_opr  | (port_reg << 4) | data_reg
+ * DA mode: WCode[0] = da_opr | (data_reg << 4); + port address word
+ */
+io_op(r_opr, da_opr, size)
 {
 	register struct oper *op1, *op2;
 
 	if (numops != 2) { Prog_Error(E_NUMOPS); return; }
-	op1 = operands;
-	op2 = &operands[1];
+	op1 = operands;	/* data register */
+	op2 = &operands[1];	/* port: @reg or #imm */
 
 	if (op1->type_o != t_reg) { Prog_Error(E_OPERAND); return; }
 
 	if (op2->type_o == t_ireg) {
-		WCode[0] = opr | (regfield(op2->reg_o) << 4) | regfield(op1->value_o);
+		/* R mode: port in indirect register */
+		WCode[0] = r_opr | (regfield(op2->reg_o) << 4) | regfield(op1->value_o);
 	} else if (op2->type_o == t_immed) {
-		WCode[0] = opr | (0 << 4) | regfield(op1->value_o);
+		/* DA mode: port is immediate address */
+		WCode[0] = da_opr | (regfield(op1->value_o) << 4);
 		rel_val(op2, W);
 	} else Prog_Error(E_OPERAND);
 }

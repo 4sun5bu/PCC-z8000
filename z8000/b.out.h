@@ -66,8 +66,13 @@
 #define RWORD	(01<<(4+8))
 #define RLONG	(02<<(4+8))
 
+/* On-disk sizes (independent of host sizeof(long)) */
+#define BHDR_DISKSIZE	32	/* 8 * 4 bytes */
+#define RELOC_DISKSIZE	8	/* short + short + long = 2+2+4 */
+#define SYM_DISKSIZE	6	/* short + long = 2+4 */
+
 /* macros which define various positions in file based on a bhdr, filhdr */
-#define TEXTPOS		sizeof(filhdr)
+#define TEXTPOS		BHDR_DISKSIZE
 #define DATAPOS 	TEXTPOS + filhdr.tsize
 #define SYMPOS		DATAPOS + filhdr.dsize
 #define RTEXTPOS	SYMPOS + filhdr.ssize

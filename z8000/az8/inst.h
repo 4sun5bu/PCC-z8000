@@ -208,6 +208,7 @@
 #define i_mreq	173
 #define i_mres	174
 #define i_mset	175
+#define i_ldctl	176
 
 /* pseudo ops */
 #define i_long	200

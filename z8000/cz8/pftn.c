@@ -342,8 +342,15 @@ defid( q, class )  NODE *q; {
 		  if ((regvar&~0377) < (minrvar&~0377))
 		    { minrvar &= 0377; minrvar |= regvar&~0377; }
 		} else {
-		  p->offset = regvar&0377;
-		  regvar = ((regvar&0377)-1) | (regvar&~0377);
+		  int r = regvar&0377;
+		  if (szty(type) == 2) {
+		    if (r & 1) r--;  /* align to even for register pair */
+		    p->offset = r;
+		    regvar = (r-2) | (regvar&~0377);
+		  } else {
+		    p->offset = r;
+		    regvar = (r-1) | (regvar&~0377);
+		  }
 		  if ((regvar&0377) < (minrvar&0377))
 		    { minrvar &= ~0377; minrvar |= regvar&0377; }
 		}		   
