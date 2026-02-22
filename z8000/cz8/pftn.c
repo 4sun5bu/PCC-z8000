@@ -820,6 +820,7 @@ beginit(curid){
 
 	inoff = 0;
 	ibseen = 0;
+	incode_reset();
 
 	pstk = 0;
 

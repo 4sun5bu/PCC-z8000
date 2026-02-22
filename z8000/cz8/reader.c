@@ -877,7 +877,7 @@ cbranch( p, true, false ) NODE *p; {
 			false = -1;
 			}
 #ifndef NOOPT
-		if( p->in.right->in.op == ICON && p->in.right->tn.lval == 0 && p->in.right->in.name[0] == '\0' && p->in.left->in.type != LONG && p->in.left->in.type != ULONG ){
+		if( p->in.right->in.op == ICON && p->in.right->tn.lval == 0 && p->in.right->in.name[0] == '\0' && p->in.left->in.type != LONG && p->in.left->in.type != ULONG && o != GT && o != GE && o != LT && o != LE ){
 			switch( o ){
 
 			case UGT:

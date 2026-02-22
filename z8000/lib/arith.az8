@@ -28,8 +28,8 @@ uldiv_core:
 	! shift dividend left, MSB goes to carry
 	slal	rr2, #1
 	! shift carry into remainder
-	rl	r1, #1
-	rl	r0, #1
+	rlc	r1, #1
+	rlc	r0, #1
 	! compare remainder >= divisor
 	cp	r0, r4
 	jr ult,	.udskip
@@ -94,6 +94,62 @@ ldiv:
 .ld_done:
 	ld	r0, r2
 	ld	r1, r3
+	pop	r7, @sp
+	pop	r6, @sp
+	pop	r5, @sp
+	pop	r4, @sp
+	ret
+
+! aldiv - signed 32-bit divide-assign: *ptr /= value
+!   sp+2 = ptr (pointer to long)
+!   sp+4 = divisor high, sp+6 = divisor low
+!   stores quotient at *ptr, returns quotient in RR0
+	.globl	aldiv
+aldiv:
+	push	@sp, r4
+	push	@sp, r5
+	push	@sp, r6
+	push	@sp, r7
+	push	@sp, r8
+	! sp+10=retaddr, sp+12=ptr, sp+14=div_hi, sp+16=div_lo
+	ld	r8, 12(sp)		! r8 = pointer to long
+	ld	r2, @r8			! dividend high
+	ld	r3, 2(r8)		! dividend low
+	ld	r4, 14(sp)		! divisor high
+	ld	r5, 16(sp)		! divisor low
+	ld	r7, r2
+	xor	r7, r4
+	! make dividend positive
+	test	r2
+	jr pl,	.ad_dpos
+	com	r2
+	com	r3
+	add	r3, #1
+	jr nc,	.ad_dpos
+	add	r2, #1
+.ad_dpos:
+	test	r4
+	jr pl,	.ad_spos
+	com	r4
+	com	r5
+	add	r5, #1
+	jr nc,	.ad_spos
+	add	r4, #1
+.ad_spos:
+	call	uldiv_core
+	test	r7
+	jr pl,	.ad_done
+	com	r2
+	com	r3
+	add	r3, #1
+	jr nc,	.ad_done
+	add	r2, #1
+.ad_done:
+	ld	@r8, r2			! store quotient high
+	ld	2(r8), r3		! store quotient low
+	ld	r0, r2
+	ld	r1, r3
+	pop	r8, @sp
 	pop	r7, @sp
 	pop	r6, @sp
 	pop	r5, @sp

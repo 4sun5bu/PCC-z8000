@@ -788,37 +788,37 @@ ASG MUL,	INAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	ld	r1,AL\n	mult	rr0,AR\nZH",
+		"	ld	r1,AL\n	mult	rr0,AR\n	ld	AL,r1\nZH",
 
 ASG MUL,	INAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	ld	r1,AL\n	mult	rr0,AR\nZH",
+		"	ld	r1,AL\n	mult	rr0,AR\n	ld	AL,r1\nZH",
 
 ASG DIV,	INAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	ld	r1,AL\n	exts	rr0\n	div	rr0,AR\nZH",
+		"	ld	r1,AL\n	exts	rr0\n	div	rr0,AR\n	ld	AL,r1\nZH",
 
 ASG DIV,	INAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	ld	r1,AL\n	clr	r0\n	div	rr0,AR\nZH",
+		"	ld	r1,AL\n	clr	r0\n	div	rr0,AR\n	ld	AL,r1\nZH",
 
 ASG MOD,	INAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	ld	r1,AL\n	exts	rr0\n	div	rr0,AR\n	ld	r1,r0\nZH",
+		"	ld	r1,AL\n	exts	rr0\n	div	rr0,AR\n	ld	r1,r0\n	ld	AL,r1\nZH",
 
 ASG MOD,	INAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	ld	r1,AL\n	clr	r0\n	div	rr0,AR\n	ld	r1,r0\nZH",
+		"	ld	r1,AL\n	clr	r0\n	div	rr0,AR\n	ld	r1,r0\n	ld	AL,r1\nZH",
 
 /* === UNARY CALL === */
 
@@ -893,6 +893,13 @@ SCONV,	INTAREG|INAREG,
 	SANY,	TWORD,
 		NAREG|NASR,	RESC1,
 		"ZT	ld	A1,AL\n",
+
+/* int/word -> char from memory: adjust offset for big-endian byte access */
+SCONV,	INAREG|INTAREG,
+	SNAME|SOREG,	TWORD,
+	SANY,	TCHAR|TUCHAR,
+		0,	RLEFT,
+		"ZT",
 
 /* int/word -> char: no code, just use low byte */
 SCONV,	INAREG|INTAREG,

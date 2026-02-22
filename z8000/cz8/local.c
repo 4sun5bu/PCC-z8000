@@ -179,6 +179,8 @@ offcon( off, t, d, s ) OFFSZ off; TWORD t; {
 static inwd	/* current bit offsed in word */;
 static long word	/* word being built from fields */;
 
+incode_reset() { inwd = 0; word = 0; }
+
 incode( p, sz ) register NODE *p; {
 
 	/* generate initialization code for assigning a constant c
@@ -188,7 +190,7 @@ incode( p, sz ) register NODE *p; {
 	/* we also assume sz  < SZINT */
 
 	if((sz+inwd) > SZINT) cerror("incode: field > int");
-	word |= (p->tn.lval & ((1 << sz) -1)) << (SZINT - sz - inwd);
+	word |= (p->tn.lval & ((1 << sz) -1)) << (32 - sz - inwd);
 	inwd += sz;
 	inoff += sz;
 	while (inwd >= 16) {
