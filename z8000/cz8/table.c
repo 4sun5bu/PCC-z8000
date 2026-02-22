@@ -399,13 +399,13 @@ INCR,	INTAREG|INAREG|FOREFF,
 	EAA,	TSCALAR,
 	S16CON,	TSCALAR,
 		NAREG,	RESC1,
-		"F	ldZB	A1,AL\n	inc	AL,AR\n",
+		"F	ldZB	A1,AL\n	incZB	AL,AR\n",
 
 DECR,	INTAREG|INAREG|FOREFF,
 	EAA,	TSCALAR,
 	S16CON,	TSCALAR,
 		NAREG,	RESC1,
-		"F	ldZB	A1,AL\n	dec	AL,AR\n",
+		"F	ldZB	A1,AL\n	decZB	AL,AR\n",
 
 /* post-increment with general constant - register dest */
 INCR,	INTAREG|INAREG|FOREFF,

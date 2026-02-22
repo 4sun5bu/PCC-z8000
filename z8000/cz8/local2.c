@@ -117,9 +117,14 @@ zzzcode( p, c ) NODE *p; {
 	case 'C':
 		/* function call */
 		switch (p->in.left->in.op) {
-		  case ICON:
-		  case NAME:	printf("\tcall\t");
+		  case ICON:	printf("\tcall\t");
 				acon(p->in.left);
+				return;
+
+		  case NAME:	/* indirect call through function pointer variable */
+				printf("\tld\tr8,");
+				adrput(p->in.left);
+				printf("\n\tcall\t@r8");
 				return;
 
 		  case REG:	printf("\tcall\t@");
