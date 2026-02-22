@@ -309,6 +309,28 @@ zzzcode( p, c ) NODE *p; {
 			}
 		break;
 
+	case 'H':
+		/* After mult/div into rr0, update left child to reflect
+		   that the result is now in R1 (not whatever register
+		   the left operand was originally in).  Without this,
+		   RLEFT/reclaim tracks the wrong register.
+		   Must also fix busy[] accounting: recl2 in walkf will
+		   rfree whatever register the left child shows. */
+		{
+			NODE *l = getlr( p, 'L' );
+			int oldreg = l->tn.rval;
+			if( oldreg != R1 ){
+				rbusy( R1, p->in.type );
+				if( istreg( oldreg ) )
+					rfree( oldreg, p->in.type );
+			}
+			l->in.op = REG;
+			l->tn.rval = R1;
+			l->tn.lval = 0;
+			l->in.name[0] = '\0';
+		}
+		return;
+
 	default:
 		cerror( "illegal zzzcode" );
 		}

@@ -14,8 +14,8 @@ char	*strcpy();
 
 #define NOVLY	16
 #define	NROUT	256
-#define	NSYM	1503
-#define	NSYMPR	1500
+#define	NSYM	4003
+#define	NSYMPR	4000
 #define TABSZ	700
 
 
@@ -451,6 +451,8 @@ middle()
 	dsize = (dsize + 1) & ~01;		/* move to word boundry */
 	corigin = dorigin + dsize;		/* common after data */
 	borigin = corigin + csize;		/* bss after common area */
+	fprintf(stderr, "DEBUG middle: torigin=0x%lx tsize=0x%lx dorigin=0x%lx dsize=0x%lx corigin=0x%lx csize=0x%lx borigin=0x%lx\n",
+		torigin, tsize, dorigin, dsize, corigin, csize, borigin);
 	nund = 0;				/* no undefined initially */
 /*	ssize = size of local symbols to be entered in load2		*/
 	doffset = 0;				/* beginning of data seg */
@@ -470,10 +472,13 @@ common()
 		if (sp->s.stype == EXTERN+UNDEF && ((val = sp->s.svalue) != 0))
 		{
 			val = (val + 1) & ~01;	/* word boundry */
+			if (sp->sname && (strcmp(sp->sname, "buf") == 0 || strcmp(sp->sname, "bfreelis") == 0 || strcmp(sp->sname, "buffers") == 0))
+				fprintf(stderr, "DEBUG common: %s size=%ld offset=%ld\n", sp->sname, val, csize);
 			sp->s.svalue = csize;
 			sp->s.stype = EXTERN+COMM;
 			csize += val;
 		}
+	fprintf(stderr, "DEBUG common: total csize=%ld\n", csize);
 }
 /* sym2 -	Assign external symbols their final value and compute ssize */
 sym2(sp)
@@ -501,7 +506,11 @@ register symp sp;
 		break;
 
 	case EXTERN+DATA:
+		if (sp->sname && strcmp(sp->sname, "bdevsw") == 0)
+			fprintf(stderr, "DEBUG sym2: bdevsw before=0x%lx dorigin=0x%lx\n", sp->s.svalue, dorigin);
 		sp->s.svalue += dorigin;
+		if (sp->sname && strcmp(sp->sname, "bdevsw") == 0)
+			fprintf(stderr, "DEBUG sym2: bdevsw after=0x%lx\n", sp->s.svalue);
 		break;
 
 	case EXTERN+BSS:
@@ -510,7 +519,11 @@ register symp sp;
 
 	case EXTERN+COMM:
 		sp->s.stype = EXTERN+BSS;
+		if (sp->sname && (strcmp(sp->sname, "buf") == 0 || strcmp(sp->sname, "bfreelis") == 0 || strcmp(sp->sname, "buffers") == 0))
+			fprintf(stderr, "DEBUG sym2 COMM: %s before=0x%lx corigin=0x%lx\n", sp->sname, sp->s.svalue, corigin);
 		sp->s.svalue += corigin;
+		if (sp->sname && (strcmp(sp->sname, "buf") == 0 || strcmp(sp->sname, "bfreelis") == 0 || strcmp(sp->sname, "buffers") == 0))
+			fprintf(stderr, "DEBUG sym2 COMM: %s after=0x%lx\n", sp->sname, sp->s.svalue);
 		break;
 	}
 }
@@ -556,24 +569,23 @@ setupout()
 	else filhdr.entry = 0;
 	filhdr.entry = torigin;
 	if ((tout = fopen(ofilename, "w")) == NULL) fatal(e8, ofilename);
-	if ((dout = fopen(ofilename, "a")) == NULL) fatal(e9);
+	if ((dout = fopen(ofilename, "r+")) == NULL) fatal(e9);
 	fseek(dout, (long)(DATAPOS), 0);
 	if (rflag)
 	{
-		if ((trout = fopen(ofilename, "a")) == NULL) fatal(e9);
+		if ((trout = fopen(ofilename, "r+")) == NULL) fatal(e9);
 		fseek(trout, (long)RTEXTPOS, 0); /* start of text relocation */
-		if ((drout = fopen(ofilename, "a")) == NULL) fatal(e9);
+		if ((drout = fopen(ofilename, "r+")) == NULL) fatal(e9);
 		fseek(drout, (long)RDATAPOS, 0);	/* to data reloc */
 	}
-/**	fwrite(&filhdr, sizeof(filhdr), 1, tout);*/
-	put68(text, &filhdr.fmagic, sizeof(filhdr.fmagic));
-	put68(text, &filhdr.tsize, sizeof(filhdr.tsize));
-	put68(text, &filhdr.dsize, sizeof(filhdr.dsize));
-	put68(text, &filhdr.bsize, sizeof(filhdr.bsize));
-	put68(text, &filhdr.ssize, sizeof(filhdr.ssize));
-	put68(text, &filhdr.rtsize, sizeof(filhdr.rtsize));
-	put68(text, &filhdr.rdsize, sizeof(filhdr.rdsize));
-	put68(text, &filhdr.entry, sizeof(filhdr.entry));
+	put68(tout, &filhdr.fmagic, sizeof(filhdr.fmagic));
+	put68(tout, &filhdr.tsize, sizeof(filhdr.tsize));
+	put68(tout, &filhdr.dsize, sizeof(filhdr.dsize));
+	put68(tout, &filhdr.bsize, sizeof(filhdr.bsize));
+	put68(tout, &filhdr.ssize, sizeof(filhdr.ssize));
+	put68(tout, &filhdr.rtsize, sizeof(filhdr.rtsize));
+	put68(tout, &filhdr.rdsize, sizeof(filhdr.rdsize));
+	put68(tout, &filhdr.entry, sizeof(filhdr.entry));
 }
 /* load2arg -	Load a named file or an archive */
 
@@ -770,6 +782,9 @@ register struct reloc *r;
 	else
 	{
 		offs = sp->s.svalue;
+		if (sp->sname && strcmp(sp->sname, "bdevsw") == 0)
+			fprintf(stderr, "DEBUG relext: bdevsw offs=0x%lx stype=0x%x rsymbol=%d rpos=0x%lx\n",
+				offs, sp->s.stype, r->rsymbol, r->rpos);
 		switch(sp->s.stype & 037)
 		{
 		case TEXT: (r->rinfo & ~RSEGMNT) | RTEXT; break;

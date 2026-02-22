@@ -979,7 +979,7 @@ ptmatch(p)  register NODE *p; {
 
 	p->in.left = makety( p->in.left, t, d, s );
 	p->in.right = makety( p->in.right, t, d, s );
-	if( o!=MINUS ){
+	if( o!=MINUS && !logop(o) ){
 
 		p->in.type = t;
 		p->fn.cdim = d;

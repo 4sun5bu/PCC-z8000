@@ -741,84 +741,84 @@ ASG RS,	INAREG|FOREFF,
 /* === MUL / DIV / MOD (16-bit hardware operations) === */
 /* rallo ensures left operand is in r1 (part of pair rr0) */
 
-/* signed multiply: r1 * src -> rr0, low word (result) in r1 */
+/* signed multiply: move AL to r1, r1 * src -> rr0, result in r1 */
 MUL,	INAREG|INTAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	mult	rr0,AR\n",
+		"	ld	r1,AL\n	mult	rr0,AR\nZH",
 
 /* unsigned multiply */
 MUL,	INAREG|INTAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	mult	rr0,AR\n",
+		"	ld	r1,AL\n	mult	rr0,AR\nZH",
 
-/* signed divide: exts r1 -> rr0, then rr0/src -> r1(quot), r0(rem) */
+/* signed divide: move AL to r1, sign extend, divide */
 DIV,	INAREG|INTAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	exts	rr0\n	div	rr0,AR\n",
+		"	ld	r1,AL\n	exts	rr0\n	div	rr0,AR\nZH",
 
-/* unsigned divide */
+/* unsigned divide: clear r0, move AL to r1, divide */
 DIV,	INAREG|INTAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	subl	rr0,rr0\n	ld	r1,AL\n	div	rr0,AR\n",
+		"	ld	r1,AL\n	clr	r0\n	div	rr0,AR\nZH",
 
-/* signed modulus: same as div, then move remainder r0 -> r1 */
+/* signed modulus: move AL to r1, sign extend, divide, remainder r0 -> r1 */
 MOD,	INAREG|INTAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	exts	rr0\n	div	rr0,AR\n	ld	r1,r0\n",
+		"	ld	r1,AL\n	exts	rr0\n	div	rr0,AR\n	ld	r1,r0\nZH",
 
-/* unsigned modulus */
+/* unsigned modulus: clear r0, move AL to r1, divide, remainder r0 -> r1 */
 MOD,	INAREG|INTAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	subl	rr0,rr0\n	ld	r1,AL\n	div	rr0,AR\n	ld	r1,r0\n",
+		"	ld	r1,AL\n	clr	r0\n	div	rr0,AR\n	ld	r1,r0\nZH",
 
 /* ASG MUL/DIV/MOD */
 ASG MUL,	INAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	mult	rr0,AR\n",
+		"	ld	r1,AL\n	mult	rr0,AR\nZH",
 
 ASG MUL,	INAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	mult	rr0,AR\n",
+		"	ld	r1,AL\n	mult	rr0,AR\nZH",
 
 ASG DIV,	INAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	exts	rr0\n	div	rr0,AR\n",
+		"	ld	r1,AL\n	exts	rr0\n	div	rr0,AR\nZH",
 
 ASG DIV,	INAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	subl	rr0,rr0\n	ld	r1,AL\n	div	rr0,AR\n",
+		"	ld	r1,AL\n	clr	r0\n	div	rr0,AR\nZH",
 
 ASG MOD,	INAREG,
 	SAREG|STAREG,	TINT|TSHORT,
 	EA,	TINT|TSHORT,
 		0,	RLEFT,
-		"	exts	rr0\n	div	rr0,AR\n	ld	r1,r0\n",
+		"	ld	r1,AL\n	exts	rr0\n	div	rr0,AR\n	ld	r1,r0\nZH",
 
 ASG MOD,	INAREG,
 	SAREG|STAREG,	TUNSIGNED|TUSHORT,
 	EA,	TUNSIGNED|TUSHORT,
 		0,	RLEFT,
-		"	subl	rr0,rr0\n	ld	r1,AL\n	div	rr0,AR\n	ld	r1,r0\n",
+		"	ld	r1,AL\n	clr	r0\n	div	rr0,AR\n	ld	r1,r0\nZH",
 
 /* === UNARY CALL === */
 
