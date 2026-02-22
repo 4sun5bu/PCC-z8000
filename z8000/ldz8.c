@@ -69,7 +69,7 @@ int nund = 0;				/* number of undefined syms in pass 2*/
 symp entrypt;				/* pointer to entry point symbol */
 int argnum;				/* current argument number */
 char ldz8[] = "ldz8 -- link editor for Z8000";
-char *ofilename = "b.out";		/* name of output file, default init */
+char *ofilename = "a.out";		/* name of output file, default init */
 FILE *text;				/* file descriptor for input file */
 FILE *rtext;				/* used to access relocation */
 char *filename;				/* name of current input file */
@@ -357,8 +357,8 @@ int libflg;	/* 1 => loading a library, 0 else */
 		dsize += filhdr.dsize;
 		bsize += filhdr.bsize;
 		ssize += nloc;			/* count local symbols */
-		rtsize += filhdr.rtsize;
-		rdsize += filhdr.rdsize;
+		rtsize += filhdr.trsize;
+		rdsize += filhdr.drsize;
 		return(1);
 	}
 	/*
@@ -390,8 +390,7 @@ sym1()
 	{
 		if (xflag || (Xflag && (cursym.sname[0] == '.')
 			&& (cursym.sname[1] == 'L')));
-		else nloc += SYM_DISKSIZE +
-			     cursym.snlength + 1;
+		else nloc += NLIST_DISKSIZE;
 		return(0);
 	}
 	symreloc(); 			/* relocate symbol in file */
@@ -484,7 +483,7 @@ common()
 sym2(sp)
 register symp sp;
 {
-	ssize += SYM_DISKSIZE + sp->snlength + 1;
+	ssize += NLIST_DISKSIZE;
 	switch (sp->s.stype)
 	{
 	case EXTERN+UNDEF:
@@ -558,8 +557,8 @@ setupout()
 	filhdr.tsize = tsize;
 	filhdr.dsize = dsize;
 	filhdr.bsize = bsize;
-	filhdr.rtsize = rflag? rtsize: 0;
-	filhdr.rdsize = rflag? rdsize: 0;
+	filhdr.trsize = rflag? rtsize: 0;
+	filhdr.drsize = rflag? rdsize: 0;
 	filhdr.ssize = sflag? 0:ssize;
 	if (entrypt)
 	{
@@ -578,14 +577,14 @@ setupout()
 		if ((drout = fopen(ofilename, "r+")) == NULL) fatal(e9);
 		fseek(drout, (long)RDATAPOS, 0);	/* to data reloc */
 	}
-	put68(tout, &filhdr.fmagic, sizeof(filhdr.fmagic));
-	put68(tout, &filhdr.tsize, sizeof(filhdr.tsize));
-	put68(tout, &filhdr.dsize, sizeof(filhdr.dsize));
-	put68(tout, &filhdr.bsize, sizeof(filhdr.bsize));
-	put68(tout, &filhdr.ssize, sizeof(filhdr.ssize));
-	put68(tout, &filhdr.rtsize, sizeof(filhdr.rtsize));
-	put68(tout, &filhdr.rdsize, sizeof(filhdr.rdsize));
-	put68(tout, &filhdr.entry, sizeof(filhdr.entry));
+	put68(tout, &filhdr.fmagic, 2);
+	put68(tout, &filhdr.tsize, 2);
+	put68(tout, &filhdr.dsize, 2);
+	put68(tout, &filhdr.bsize, 2);
+	put68(tout, &filhdr.ssize, 2);
+	put68(tout, &filhdr.entry, 2);
+	put68(tout, &filhdr.trsize, 2);
+	put68(tout, &filhdr.drsize, 2);
 }
 /* load2arg -	Load a named file or an archive */
 
@@ -597,32 +596,33 @@ char *cp;
 	switch (getfile(cp))
 	{
 	case FMAGIC:			/* normal file */
-
-/**		dread(&filhdr, sizeof filhdr, 1, text);*/
-		get68(text, &filhdr.fmagic, sizeof(filhdr.fmagic));
-		get68(text, &filhdr.tsize, sizeof(filhdr.tsize));
-		get68(text, &filhdr.dsize, sizeof(filhdr.dsize));
-		get68(text, &filhdr.bsize, sizeof(filhdr.bsize));
-		get68(text, &filhdr.ssize, sizeof(filhdr.ssize));
-		get68(text, &filhdr.rtsize, sizeof(filhdr.rtsize));
-		get68(text, &filhdr.rdsize, sizeof(filhdr.rdsize));
-		get68(text, &filhdr.entry, sizeof(filhdr.entry));
+	{
+		short tmp;
+		get68(text, &tmp, 2); filhdr.fmagic = tmp;
+		get68(text, &tmp, 2); filhdr.tsize = tmp;
+		get68(text, &tmp, 2); filhdr.dsize = tmp;
+		get68(text, &tmp, 2); filhdr.bsize = tmp;
+		get68(text, &tmp, 2); filhdr.ssize = tmp;
+		get68(text, &tmp, 2); filhdr.entry = tmp;
+		get68(text, &tmp, 2); filhdr.trsize = tmp;
+		get68(text, &tmp, 2); filhdr.drsize = tmp;
 		load2(0L);
 		break;
+	}
 	case ARCMAGIC:			/* archive */
 		for(entry=arclist->arc_e_list; entry; entry=entry->arc_e_next)
 		{
+			short tmp;
 			position = entry->arc_offs;
 			fseek(text, position, 0);
-/**			dread(&filhdr, sizeof filhdr, 1, text);*/
-			get68(text, &filhdr.fmagic, sizeof(filhdr.fmagic));
-			get68(text, &filhdr.tsize, sizeof(filhdr.tsize));
-			get68(text, &filhdr.dsize, sizeof(filhdr.dsize));
-			get68(text, &filhdr.bsize, sizeof(filhdr.bsize));
-			get68(text, &filhdr.ssize, sizeof(filhdr.ssize));
-			get68(text, &filhdr.rtsize, sizeof(filhdr.rtsize));
-			get68(text, &filhdr.rdsize, sizeof(filhdr.rdsize));
-			get68(text, &filhdr.entry, sizeof(filhdr.entry));
+			get68(text, &tmp, 2); filhdr.fmagic = tmp;
+			get68(text, &tmp, 2); filhdr.tsize = tmp;
+			get68(text, &tmp, 2); filhdr.dsize = tmp;
+			get68(text, &tmp, 2); filhdr.bsize = tmp;
+			get68(text, &tmp, 2); filhdr.ssize = tmp;
+			get68(text, &tmp, 2); filhdr.entry = tmp;
+			get68(text, &tmp, 2); filhdr.trsize = tmp;
+			get68(text, &tmp, 2); filhdr.drsize = tmp;
 			load2(position);		/* load the file */
 		}
 		arclist = arclist->arc_next;
@@ -690,10 +690,10 @@ long sloc;	/* position of filhdr in current input file */
 	}
 	fseek(text, sloc+TEXTPOS, 0);
 	fseek(rtext, sloc+RTEXTPOS, 0);
-	load2td(tout, trout, torigin, filhdr.tsize, filhdr.rtsize);
+	load2td(tout, trout, torigin, filhdr.tsize, filhdr.trsize);
 	fseek(text, sloc+DATAPOS, 0);
 	fseek(rtext, sloc+RDATAPOS, 0);
-	load2td(dout, drout, doffset, filhdr.dsize, filhdr.rdsize);
+	load2td(dout, drout, doffset, filhdr.dsize, filhdr.drsize);
 	torigin += filhdr.tsize;
 	dorigin += filhdr.dsize;
 	doffset += filhdr.dsize;
@@ -837,30 +837,35 @@ FILE *outf;		/* where to write to */
 	}
 	return(position + size);
 }
-/* finishout 	Finish off the output file by writing out symbol table */
+/* finishout 	Finish off the output file by writing out symbol table (nlist) */
 
 finishout()
 {
 	register symp sp;
 
-	fseek(tout, (long)(BHDR_DISKSIZE + tsize + dsize), 0);
+	{
+		long symoff = HDRSIZE + tsize + dsize;
+		if (rflag) symoff += rtsize + rdsize;
+		fseek(tout, symoff, 0);
+	}
 	if (sflag == 0) for (sp = symtab; sp < &symtab[symindex]; sp++)
 	{
 		register int i;
 		register char *cp;
+		short n_type, n_value;
+		char n_name[8];
 
-/**		fwrite(&sp->s, sizeof sp->s, 1, tout);*/
-		put68(tout, &sp->s.stype, sizeof(sp->s.stype));
-		put68(tout, &sp->s.svalue, sizeof(sp->s.svalue));
-		if ((i = sp->snlength) == 0) bletch("zero length symbol");
+		/* Write 8-char name, NUL-padded */
+		for (i = 0; i < 8; i++) n_name[i] = 0;
 		cp = sp->sname;
-		while (i--)
-		{
-			if (*cp <= ' ')
-				bletch("bad character in symbol %s",sp->sname);
-			putc(*cp++, tout);
-		}
-		putc('\0', tout);
+		for (i = 0; i < 8 && *cp; i++) n_name[i] = *cp++;
+		fwrite(n_name, 8, 1, tout);
+		/* Write n_type (convert from internal encoding) */
+		n_type = sp->s.stype >> 8;
+		put68(tout, &n_type, 2);
+		/* Write n_value */
+		n_value = (short)sp->s.svalue;
+		put68(tout, &n_value, 2);
 		if (ferror(tout)) fatal(e14, ofilename);
 	}
 	fclose(tout);
@@ -882,7 +887,7 @@ register char *cp;	/* name of the file to open */
 	int cc;
 	register int c;
 	char buff[SARMAG];
-	long magic;
+	short magic;
 
 	archdr.ar_name[0] = '\0';
 	filename = cp;
@@ -897,8 +902,7 @@ register char *cp;	/* name of the file to open */
 	if (text == NULL && ((text = fopen(filename, "r")) == NULL))
 		fatal(e15, filename);
 	if ((rtext = fopen(filename, "r")) == NULL) fatal(e15, filename);
-/**	dread(&magic, sizeof magic, 1, text);*/
-	get68(text, &magic, sizeof(magic));
+	get68(text, &magic, 2);
 	fseek(text, 0L, 0);	/* reset file pointer */
 	if (magic == FMAGIC) return(FMAGIC);
 	dread(buff, SARMAG, 1, text);
@@ -1025,21 +1029,21 @@ symreloc()
 	if (cursym.s.stype&EXTERN)
 		cursym.s.stype = EXTERN+ABS;
 }
-/* readhdr -	Read in an a.out header, adjusting relocation offsets */
+/* readhdr -	Read in an a.out header (16 bytes), adjusting relocation offsets */
 readhdr(pos)
 long pos;
 {
 	register long st, sd;
+	short tmp;
 	fseek(text, pos, 0);
-/**	dread(&filhdr, sizeof filhdr, 1, text);*/
-	get68(text, &filhdr.fmagic, sizeof(filhdr.fmagic));
-	get68(text, &filhdr.tsize, sizeof(filhdr.tsize));
-	get68(text, &filhdr.dsize, sizeof(filhdr.dsize));
-	get68(text, &filhdr.bsize, sizeof(filhdr.bsize));
-	get68(text, &filhdr.ssize, sizeof(filhdr.ssize));
-	get68(text, &filhdr.rtsize, sizeof(filhdr.rtsize));
-	get68(text, &filhdr.rdsize, sizeof(filhdr.rdsize));
-	get68(text, &filhdr.entry, sizeof(filhdr.entry));
+	get68(text, &tmp, 2); filhdr.fmagic = tmp;
+	get68(text, &tmp, 2); filhdr.tsize = tmp;
+	get68(text, &tmp, 2); filhdr.dsize = tmp;
+	get68(text, &tmp, 2); filhdr.bsize = tmp;
+	get68(text, &tmp, 2); filhdr.ssize = tmp;
+	get68(text, &tmp, 2); filhdr.entry = tmp;
+	get68(text, &tmp, 2); filhdr.trsize = tmp;
+	get68(text, &tmp, 2); filhdr.drsize = tmp;
 	if (filhdr.fmagic != FMAGIC)
 		error(e5, filename);
 	st = (filhdr.tsize+1) & ~1;
@@ -1049,31 +1053,32 @@ long pos;
 	cbrel = - (st + sd);
 	filhdr.bsize = (filhdr.bsize+1) & ~1;
 }
-/* getsym -	Read in a symbol from txt, leaving data in cursym.  Return
-		length of stuff read in. */
+/* getsym -	Read a 12-byte nlist entry from text, leaving data in cursym.
+		Returns NLIST_DISKSIZE (12). */
 
 long getsym()
 {
-	register int c;
 	register int i;
+	short n_type, n_value;
+	char n_name[8];
 
-	/* read upto name */
-/**	fread(&cursym.s, sizeof cursym.s, 1, text);*/
-	get68(text, &cursym.s.stype, sizeof(cursym.s.stype));
-	get68(text, &cursym.s.svalue, sizeof(cursym.s.svalue));
-	if (feof(text)) fatal(e3, filename);
-	for (i = 0; i < SYMLENGTH; i++)
-	{
-		if ((c = getc(text)) == EOF) fatal(e3, filename);
-		else if ((csymbuf[i] = c) == 0)
-		{
-			if ((cursym.snlength = i) == 0) fatal(e18, filename);
-			cursym.sname = csymbuf;
-			return(SYM_DISKSIZE + i + 1);
- 		}
-	}
-	csymbuf[SYMLENGTH] = '\0';	/* make sure asciz */
-	return(SYM_DISKSIZE + i);
+	/* Read 8-byte name */
+	if (fread(n_name, 8, 1, text) != 1) fatal(e3, filename);
+	/* Read 2-byte n_type, convert to internal encoding */
+	get68(text, &n_type, 2);
+	cursym.s.stype = n_type << 8;
+	/* Read 2-byte n_value */
+	get68(text, &n_value, 2);
+	cursym.s.svalue = n_value;
+	/* Copy name to csymbuf */
+	for (i = 0; i < 8; i++) csymbuf[i] = n_name[i];
+	csymbuf[8] = '\0';
+	/* Find actual length */
+	for (i = 0; i < 8 && n_name[i]; i++);
+	if (i == 0) fatal(e18, filename);
+	cursym.snlength = i;
+	cursym.sname = csymbuf;
+	return(NLIST_DISKSIZE);
 }
 
 /* error -	Print out error messages and give up if they are severe. */

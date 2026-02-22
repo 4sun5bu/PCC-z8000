@@ -1,29 +1,24 @@
-/*	This file must be maintained in:
+/*	Layout of a.out file (Z8000):
  *
- *		/trix/include/b.out.h
- *		/include/b.out.h
- *
- *	Layout of b.out file :
- *
- *	header of 8 longs	magic number 405, 407, 410, 411
+ *	header of 8 shorts	magic number 405, 407, 410, 411
  *				text size		)
  *				data size		) in bytes
  *				bss size		)
  *				symbol table size	)
+ *				entry point
  *				text relocation size	)
  *				data relocation size	)
- *				entry point
  *
  *
  *	header:			0
- *	text:			32
- *	data:			32+textsize
- *	symbol table:		32+textsize+datasize
- *	text relocation:	32+textsize+datasize+symsize
- *	data relocation:	32+textsize+datasize+symsize+rtextsize
+ *	text:			16
+ *	data:			16+textsize
+ *	text relocation:	16+textsize+datasize
+ *	data relocation:	16+textsize+datasize+trelsize
+ *	symbol table:		16+textsize+datasize+trelsize+drelsize
  *
  */
-/* various parameters */
+/* various parameters */
 #define SYMLENGTH	50		/* maximum length of a symbol */
 #define PAGESIZE	1024		/* relocation boundry for 410 files */
 
@@ -34,7 +29,7 @@
 #define	NMAGIC	0410
 #define	IMAGIC	0411
 
-/* symbol types */
+/* symbol types (internal encoding, shifted left 8 from a.out N_* values) */
 #define	EXTERN	(040<<8)
 #define	UNDEF	(00<<8)
 #define	ABS	(01<<8)
@@ -67,30 +62,31 @@
 #define RLONG	(02<<(4+8))
 
 /* On-disk sizes (independent of host sizeof(long)) */
-#define BHDR_DISKSIZE	32	/* 8 * 4 bytes */
+#define HDRSIZE		16	/* 8 * 2 bytes */
 #define RELOC_DISKSIZE	8	/* short + short + long = 2+2+4 */
-#define SYM_DISKSIZE	6	/* short + long = 2+4 */
+#define NLIST_DISKSIZE	12	/* char[8] + short + short = 8+2+2 */
 
 /* macros which define various positions in file based on a bhdr, filhdr */
-#define TEXTPOS		BHDR_DISKSIZE
+#define TEXTPOS		HDRSIZE
 #define DATAPOS 	TEXTPOS + filhdr.tsize
-#define SYMPOS		DATAPOS + filhdr.dsize
-#define RTEXTPOS	SYMPOS + filhdr.ssize
-#define RDATAPOS	RTEXTPOS + filhdr.rtsize
-#define ENDPOS		RDATAPOS + filhdr.rdsize
-/* header of b.out files */
+#define RTEXTPOS	DATAPOS + filhdr.dsize
+#define RDATAPOS	RTEXTPOS + filhdr.trsize
+#define SYMPOS		RDATAPOS + filhdr.drsize
+#define ENDPOS		SYMPOS + filhdr.ssize
+
+/* header of a.out files (internal representation, fields are long for convenience) */
 struct bhdr {
 	long	fmagic;
 	long	tsize;
 	long	dsize;
 	long	bsize;
 	long	ssize;
-	long	rtsize;
-	long	rdsize;
 	long	entry;
+	long	trsize;
+	long	drsize;
 };
 
-/* symbol management */
+/* symbol management (internal representation) */
 struct sym {
 	short	stype;
 	long	svalue;
@@ -106,7 +102,7 @@ struct reloc {
 	long rpos;		/* position of relocation in segment */
 };
 
-/* Stuff for unix compatibility */
+/* Stuff for unix compatibility */
 
 #define	A_MAGIC1	FMAGIC       	/* normal */
 #define	A_MAGIC2	NMAGIC       	/* read-only text */

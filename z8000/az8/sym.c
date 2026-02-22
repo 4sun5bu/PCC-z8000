@@ -126,34 +126,37 @@ Sym_Fix()
 
 
 /* Sym_Write -	Write out the symbols to the specified
-		file in b.out format, while computing size
-		of the symbol segment in output file.
+		file in a.out nlist format (12 bytes each),
+		while computing size of the symbol segment.
  */
 long Sym_Write(file)
   FILE *file;
   {	register struct sym_bkt  **sbp1, *sbp2;
 	register char *sp;
 	long size = 0;
-	int slength;
-	struct sym s;
+	int i;
+	short stype, n_type, n_value;
+	char n_name[8];
 
 	for (sbp1 = sym_hash_tab; sbp1 < &sym_hash_tab[HASH_MAX]; sbp1++)
 	  for (sbp2 = *sbp1; sbp2; sbp2 = sbp2->next_s)
 	    if (sbp2->id_s != -1) {
-	      if (!(sbp2->attr_s&S_DEF)) s.stype = UNDEF;
-	      else if (sbp2->csect_s == Text_csect) s.stype = TEXT;
-	      else if (sbp2->csect_s == Data_csect) s.stype = DATA;
-	      else if (sbp2->csect_s == Bss_csect) s.stype = BSS;
-	      else s.stype = ABS;
-	      if (sbp2->attr_s & S_EXT) s.stype |= EXTERN;
-	      s.svalue = sbp2->value_s;
-/**	      fwrite(&s, sizeof s, 1, file);*/
-	      put68(file, &s.stype, sizeof(s.stype));
-	      put68(file, &s.svalue, sizeof(s.svalue));
+	      if (!(sbp2->attr_s&S_DEF)) stype = UNDEF;
+	      else if (sbp2->csect_s == Text_csect) stype = TEXT;
+	      else if (sbp2->csect_s == Data_csect) stype = DATA;
+	      else if (sbp2->csect_s == Bss_csect) stype = BSS;
+	      else stype = ABS;
+	      if (sbp2->attr_s & S_EXT) stype |= EXTERN;
+	      n_type = stype >> 8;
+	      n_value = (short)sbp2->value_s;
+	      /* Write 8-char name, NUL-padded */
+	      for (i = 0; i < 8; i++) n_name[i] = 0;
 	      sp = sbp2->name_s;
-	      slength = 0;
-	      do { putc(*sp,file); slength++; } while (*sp++);
-	      size += SYM_DISKSIZE + slength;
+	      for (i = 0; i < 8 && *sp; i++) n_name[i] = *sp++;
+	      fwrite(n_name, 8, 1, file);
+	      put68(file, &n_type, 2);
+	      put68(file, &n_value, 2);
+	      size += NLIST_DISKSIZE;
 	    }
 	return(size);
 }
