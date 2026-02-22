@@ -393,7 +393,7 @@ ftnend(){ /* end of function */
 	psavbc = &asavbc[0];
 	paramno = 0;
 	autooff = AUTOINIT;
-	minrvar = regvar = MAXRVAR | ((MAXRVAR-2)<<8);
+	minrvar = regvar = MAXRVAR | ((MAXRVAR-3)<<8);	/* addr regs: R12,R11,R10 (skip R13=FP) */
 	reached = 1;
 	swx = 0;
 	swp = swtab;

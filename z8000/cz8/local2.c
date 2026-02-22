@@ -29,26 +29,26 @@ eobl2(){
 	SETOFF(spoff,2);
 
 	/* callee-saved regs are always saved in prologue at fixed offsets */
-	/* AUTOINIT reserves 16 bytes: R4-R7 at -2..-8, R10-R13 at -10..-16 */
-	savemask = usedregs & 0x3CF0;  /* bits for R4-R7 and R10-R13 */
+	/* AUTOINIT reserves 16 bytes: R4-R7 at -2..-8, R10-R12,R14 at -10..-16 */
+	savemask = usedregs & 0x5CF0;  /* bits for R4-R7, R10-R12, R14 */
 
 	/* epilogue */
 	printf( ".L%d:\n", retlab );
 
 	/* restore only the callee-saved registers that were actually used */
 	if( savemask ){
-		if( savemask & (1<<4) ) printf( "	ld	r4,-2(r14)\n" );
-		if( savemask & (1<<5) ) printf( "	ld	r5,-4(r14)\n" );
-		if( savemask & (1<<6) ) printf( "	ld	r6,-6(r14)\n" );
-		if( savemask & (1<<7) ) printf( "	ld	r7,-8(r14)\n" );
-		if( savemask & (1<<10) ) printf( "	ld	r10,-10(r14)\n" );
-		if( savemask & (1<<11) ) printf( "	ld	r11,-12(r14)\n" );
-		if( savemask & (1<<12) ) printf( "	ld	r12,-14(r14)\n" );
-		if( savemask & (1<<13) ) printf( "	ld	r13,-16(r14)\n" );
+		if( savemask & (1<<4) ) printf( "	ld	r4,-2(r13)\n" );
+		if( savemask & (1<<5) ) printf( "	ld	r5,-4(r13)\n" );
+		if( savemask & (1<<6) ) printf( "	ld	r6,-6(r13)\n" );
+		if( savemask & (1<<7) ) printf( "	ld	r7,-8(r13)\n" );
+		if( savemask & (1<<10) ) printf( "	ld	r10,-10(r13)\n" );
+		if( savemask & (1<<11) ) printf( "	ld	r11,-12(r13)\n" );
+		if( savemask & (1<<12) ) printf( "	ld	r12,-14(r13)\n" );
+		if( savemask & (1<<14) ) printf( "	ld	r14,-16(r13)\n" );
 	}
 
-	printf( "	ld	sp,r14\n" );
-	printf( "	pop	r14,@sp\n" );
+	printf( "	ld	sp,r13\n" );
+	printf( "	pop	r13,@sp\n" );
 	printf( "	ret\n" );
 	printf( "_F%d = %ld\n", ftnno, spoff );
 	printf( "_S%d = %d\n", ftnno, savemask );
@@ -101,8 +101,8 @@ int rstatus[] = {
 
 	SBREG|STBREG, SBREG|STBREG,	/* R8, R9: scratch addr */
 	SBREG|STBREG, SBREG|STBREG,	/* R10, R11: reg var addr */
-	SBREG|STBREG, SBREG|STBREG,	/* R12, R13: reg var addr */
-	SBREG,	      SBREG,		/* R14 (FP), R15 (SP): not allocatable */
+	SBREG|STBREG, SBREG,		/* R12: reg var addr, R13 (FP): not allocatable */
+	SBREG,	      SBREG,		/* R14 (reserved), R15 (SP): not allocatable */
 	};
 
 NODE *brnode;
@@ -367,6 +367,8 @@ setregs(){ /* set up temporary registers */
 		rstatus[i] = i<fregs ? SAREG|STAREG : SAREG;
 	for( i=MINRVAR; i<=MAXRVAR; i++ )
 		rstatus[i+8] = i<naregs ? SBREG|STBREG : SBREG;
+	rstatus[13] = SBREG;	/* R13 (FP): never allocatable */
+	rstatus[15] = SBREG;	/* R15 (SP): never allocatable */
 	}
 
 szty(t) TWORD t; { /* size, in words, needed to hold thing of type t */
