@@ -39,7 +39,7 @@ tshape( p, shape ) NODE *p; {
 	o = p->in.op;
 
 	if( sdebug ){
-		printf( "tshape( %o, %o), op = %d\n", p, shape, o );
+		printf( "tshape( %lx, %o), op = %d\n", p, shape, o );
 		}
 
 	if( shape & SPECIAL ){

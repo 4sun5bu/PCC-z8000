@@ -33,10 +33,10 @@ int	noflflag;
 int	mxflag;
 char	*chpass ;
 char	*npassname ;
-char	pass0[64] = "/lib/cz8";
+char	pass0[64] = "/usr/local/bin/cz8";
 char	pass1[64] = "/lib/oz8";
 char	pass2[64] = "/lib/xxx";
-char	passp[64] = "/lib/cpp";
+char	passp[64] = "/usr/local/bin/cppV7";
 char	libdr[64];
 char	*ldrel = NULL;	/* -R argument for loader */
 # ifndef z8000		/* cross-compiling from PDP11, VAX, or 68000 */
@@ -47,8 +47,8 @@ char	*ldz8 = "/usr/local/ldz8";
 # else			/* native Z8000 */
 char	pref[64]  = "/lib/crt0.b";
 char	incld[64] = "-I/usr/include";
-char	*az8 = "/bin/az8";
-char	*ldz8 = "/bin/ldz8";
+char	*az8 = "/usr/local/bin/az8";
+char	*ldz8 = "/usr/local/bin/ldz8";
 # endif
 char	*copy();
 char	*getsuf();

@@ -45,7 +45,7 @@ buildtree( o, l, r ) register NODE *l, *r; {
 	extern int eprint();
 
 # ifndef BUG1
-	if( bdebug ) printf( "buildtree( %s, %o, %o )\n", opst[o], l, r );
+	if( bdebug ) printf( "buildtree( %s, %lx, %lx )\n", opst[o], l, r );
 # endif
 	opty = optype(o);
 
@@ -1073,7 +1073,7 @@ tymatch(p)  register NODE *p; {
 		}
 
 # ifndef BUG1
-	if( tdebug ) printf( "tymatch(%o): %o %s %o => %o\n",p,t1,opst[o],t2,tu );
+	if( tdebug ) printf( "tymatch(%lx): %o %s %o => %o\n",p,t1,opst[o],t2,tu );
 # endif
 
 	return(p);
@@ -1383,7 +1383,7 @@ eprint( p, down, a, b ) register NODE *p; int *a, *b; {
 
 	ty = optype( p->in.op );
 
-	printf("%o) %s, ", p, opst[p->in.op] );
+	printf("%lx) %s, ", p, opst[p->in.op] );
 	if( ty == LTYPE ){
 		printf( CONFMT, p->tn.lval );
 		printf( ", %d, ", p->tn.rval );

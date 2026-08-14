@@ -444,7 +444,7 @@ order(p,cook) NODE *p; {
 	first:
 # ifndef BUG4
 	if( odebug ){
-		printf( "order( %o, ", p );
+		printf( "order( %lx, ", p );
 		prcook( cookie );
 		printf( " )\n" );
 		fwalk( p, eprint, 0 );
@@ -498,7 +498,7 @@ order(p,cook) NODE *p; {
 	
 # ifndef BUG4
 	if( odebug ){
-		printf( "order( %o, ", p );
+		printf( "order( %lx, ", p );
 		prcook( cook );
 		printf( " ), cookie " );
 		prcook( cookie );
@@ -1000,7 +1000,7 @@ eprint( p, down, a, b ) NODE *p; int *a, *b; {
 	if( down-- ) printf( "    " );
 
 
-	printf( "%o) %s", p, opst[p->in.op] );
+	printf( "%lx) %s", p, opst[p->in.op] );
 	switch( p->in.op ) { /* special cases */
 
 	case REG:

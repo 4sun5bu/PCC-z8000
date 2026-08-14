@@ -1,6 +1,6 @@
 # include "mfile1"
 
-unsigned int offsz;
+extern unsigned int offsz;
 
 struct instk {
 	int in_sz;   /* size of array element */
@@ -353,7 +353,7 @@ defid( q, class )  NODE *q; {
 		  }
 		  if ((regvar&0377) < (minrvar&0377))
 		    { minrvar &= ~0377; minrvar |= regvar&0377; }
-		}		   
+		}
 		if( blevel == 1 ) p->sflags |= SSET;
 		break;
 		}
@@ -652,7 +652,7 @@ talign( ty, s) register unsigned ty; register s; {
 	/* compute the alignment of an object with type ty, sizeoff index s */
 
 	register i;
-	if( s<0 && ty!=INT && ty!=CHAR && ty!=SHORT && ty!=UNSIGNED && ty!=UCHAR && ty!=USHORT 
+	if( s<0 && ty!=INT && ty!=CHAR && ty!=SHORT && ty!=UNSIGNED && ty!=UCHAR && ty!=USHORT
 #ifdef LONGFIELDS
 		&& ty!=LONG && ty!=ULONG
 #endif
@@ -1001,7 +1001,7 @@ doinit( p ) register NODE *p; {
 		}
 
 	if( iclass == AUTO || iclass == REGISTER ){
-		/* do the initialization and get out, without regard 
+		/* do the initialization and get out, without regard
 		    for filing out the variable with zeros, etc. */
 		bccode();
 		idname = pstk->in_id;
@@ -1072,7 +1072,7 @@ gotscal(){
 		if( pstk->in_fl ) ++ibseen;
 
 		--pstk;
-		
+
 		t = pstk->in_t;
 
 		if( t == STRTY ){
@@ -1635,7 +1635,7 @@ mknonuniq(idindex) int *idindex; {/* locate a symbol table entry for */
 	return ( sp );
 	}
 
-lookup( name, s) char *name; { 
+lookup( name, s) char *name; {
 	/* look up name: must agree with s w.r.t. STAG, SMOS and SHIDDEN */
 
 	register char *p, *q;
@@ -1810,7 +1810,7 @@ hide( p ) register struct symtab *p; {
 	q->sflags = (p->sflags&(SMOS|STAG)) | SHIDES;
 	if( hflag ) werror( "%.8s redefinition hides earlier one", p->sname );
 # ifndef BUG1
-	if( ddebug ) printf( "	%d hidden in %d\n", p-stab, q-stab );
+	if( ddebug ) printf( "	%ld hidden in %ld\n", p-stab, q-stab );
 # endif
 	return( idname = q-stab );
 	}
@@ -1834,7 +1834,7 @@ unhide( p ) register struct symtab *p; {
 			if( j == NCHNAM ){ /* found the name */
 				q->sflags &= ~SHIDDEN;
 # ifndef BUG1
-				if( ddebug ) printf( "unhide uncovered %d from %d\n", q-stab,p-stab);
+				if( ddebug ) printf( "unhide uncovered %ld from %ld\n", q-stab,p-stab);
 # endif
 				return;
 				}

@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <ar.h>
+#include <string.h>
+
 #include "b.out.h"
 
 

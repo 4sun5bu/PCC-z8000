@@ -2,6 +2,8 @@
 # define EXIT exit
 # endif
 
+#include <stdarg.h>
+
 int nerrors = 0;  /* number of errors */
 
 unsigned int offsz;
@@ -23,36 +25,47 @@ unsigned caloff(){
 NODE *lastfree;  /* pointer to last free node; (for allocator) */
 
 	/* VARARGS1 */
-uerror( s, a ) char *s; { /* nonfatal error message */
+uerror( const char *s, ... ) { /* nonfatal error message */
 	/* the routine where is different for pass 1 and pass 2;
 	/*  it tells where the error took place */
+	va_list args;
 
 	++nerrors;
 	where('u');
-	fprintf( stderr, s, a );
+	va_start(args, s);
+	vfprintf( stderr, s, args );
+	va_end(args);
 	fprintf( stderr, "\n" );
 	if( nerrors > 30 ) cerror( "too many errors");
 	}
 
 	/* VARARGS1 */
-cerror( s, a, b, c ) char *s; { /* compiler error: die */
+void cerror( const char *s, ... ) { /* compiler error: die */
+	va_list args;
+
 	where('c');
 	if( nerrors && nerrors <= 30 ){ /* give the compiler the benefit of the doubt */
 		fprintf( stderr, "cannot recover from earlier errors: goodbye!\n" );
 		}
 	else {
 		fprintf( stderr, "compiler error: " );
-		fprintf( stderr, s, a, b, c );
+		va_start(args, s);
+		vfprintf( stderr, s, args );
+		va_end(args);
 		fprintf( stderr, "\n" );
 		}
 	EXIT(1);
 	}
 
 	/* VARARGS1 */
-werror( s, a, b ) char *s; {  /* warning */
+werror(const char *s, ... ) {  /* warning */
+	va_list args;
+
 	where('w');
 	fprintf( stderr, "warning: " );
-	fprintf( stderr, s, a, b );
+	va_start(args, s);
+	vfprintf( stderr, s, args);
+	va_end(args);
 	fprintf( stderr, "\n" );
 	}
 

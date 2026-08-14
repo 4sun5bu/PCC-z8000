@@ -236,6 +236,10 @@ char *argv[];
 	while (--argc > 0) {
 	  if (argv[0][0] == '-') switch (argv[0][1]) {
 	    case 'o':	O_outfile++;
+			if (!argv[1]) {
+				fprintf(stderr, "Otput file name not given\n");
+				exit(1);
+			}
 			Concat(Rel_name,argv[1],"");
 			argv++; argc--;
 			break;
@@ -265,6 +269,10 @@ char *argv[];
 	  argv++;
 	}
 
+	if (!Source_name) {
+		fprintf(stderr, "Souece file name not given\n");
+		exit(1);
+	}
 
 /* Check to see if we can open output file */
 	if(!O_outfile)

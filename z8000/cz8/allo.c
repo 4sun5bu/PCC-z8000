@@ -287,7 +287,7 @@ reclaim( p, rw, cookie ) NODE *p; {
 	/* get back stuff */
 
 	if( rdebug ){
-		printf( "reclaim( %o, ", p );
+		printf( "reclaim( %lx, ", p );
 		rwprint( rw );
 		printf( ", " );
 		prcook( cookie );
