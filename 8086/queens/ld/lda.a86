@@ -1,5 +1,0 @@
-	.text
-	.globl _lda
-_lda:
-	mov	ax,cs
-	ret
