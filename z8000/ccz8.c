@@ -42,13 +42,13 @@ char	*ldrel = NULL;	/* -R argument for loader */
 # ifndef z8000		/* cross-compiling from PDP11, VAX, or 68000 */
 char	pref[64]  = "/projects/nunix/lib/crt0.b";
 char	incld[64] = "-I/projects/nunix/include";
-char	*az8 = "/usr/local/az8";
-char	*ldz8 = "/usr/local/ldz8";
+char	*az8 = "/usr/local/bin/az8";
+char	*ldz8 = "/usr/local/bin/ldz8";
 # else			/* native Z8000 */
 char	pref[64]  = "/lib/crt0.b";
 char	incld[64] = "-I/usr/include";
-char	*az8 = "/usr/local/bin/az8";
-char	*ldz8 = "/usr/local/bin/ldz8";
+char	*az8 = "/usr/local/az8";
+char	*ldz8 = "/usr/local/ldz8";
 # endif
 char	*copy();
 char	*getsuf();

@@ -95,22 +95,22 @@ struct sym {
 /* relocation commands */
 struct reloc {
 	short rinfo;		/* rsegment, rsize, and rdisp */
-/*	char rsegment:2;	/* RTEXT, RDATA, RBSS, or REXTERN */
-/*	char rsize:2;		/* RBYTE, RWORD, or RLONG */
-/*	char rdisp:1;		/* 1 => a displacement */
+/*	char rsegment:2;	 RTEXT, RDATA, RBSS, or REXTERN */
+/*	char rsize:2;		 RBYTE, RWORD, or RLONG */
+/*	char rdisp:1;		 1 => a displacement */
 	short rsymbol;		/* id of the symbol of external relocations */
-	long rpos;		/* position of relocation in segment */
+	long rpos;			/* position of relocation in segment */
 };
 
 /* Stuff for unix compatibility */
 
-#define	A_MAGIC1	FMAGIC       	/* normal */
-#define	A_MAGIC2	NMAGIC       	/* read-only text */
+#define	A_MAGIC1	FMAGIC	/* normal */
+#define	A_MAGIC2	NMAGIC	/* read-only text */
 
-struct	nlist {	/* symbol table entry */
-	char    	n_name[8];	/* symbol name */
-	int     	n_type;    	/* type flag */
-	unsigned	n_value;	/* value */
+struct	nlist {			/* symbol table entry */
+	char n_name[8];		/* symbol name */
+	int n_type;			/* type flag */
+	unsigned n_value;	/* value */
 };
 
 		/* values for type flag */
