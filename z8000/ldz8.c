@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "ar.h"
 #include "./b.out.h"
-#include "./ar.h"
 
 /* link editor for Z8000 */
 
@@ -134,20 +134,45 @@ char *e20 = "format error in file %s, bad type of symbol %s in reloc command";
 char *e21 = "format error in file %s, bad address in relocation command";
 
 /* functions */
-long getsym();
+void procargs(int argc, char **argv);
+void newarg(char *name);
+void procflags(int argc, char **argv);
+long atox(char *s);
+void load1arg(char *cp);
+int load1(long sloc, int libflg);
+int sym1();
+void middle();
+void common();
+void sym2(symp sp);
+void ldrsym(symp asp, long val, int type);
+void setupout();
+void load2arg(char *cp);
+void load2(long sloc);
+void load2td(FILE *outf, FILE *outrf, long txtstart, long txtsize, long rsize);
+long relext(struct reloc *r);
+long relcmd(long current, long position, int size, long offs, FILE *outf);
+void finishout();
+int getfile(char *cp);
 symp lookup();
-symp slookup();
-symp *hash();
-long relext();
-long relcmd();
-long atox();
+symp *hash(char *s);
+symp slookup(char *s);
+int enter(symp sp);
+void symreloc();
+void readhdr(long pos);
+long getsym();
+void error(char *fmt, ...);
+void fatal(char *fnt, ...);
+void bletch(char *fmt, ...);
+void dread(char *pos, int size, int count, FILE *file);
+void dcopy(FILE *in, FILE *out, long count);
+void get68(FILE *file, char *p, int c);
 
 /*
 	main -	The link editor works in two passes.  In pass 1, symbols
 	are defined.  In pass 2, the actual text and data will
 	be output along with any relocation commands and symbols
 */
-
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -301,8 +326,8 @@ register char *cp;
 		position = SARMAG;
 		fseek(text, (long)SARMAG, 0);	/* skip magic word */
 		while (fread(&archdr, sizeof archdr, 1, text) && !feof(text)) {
-			if (strncmp(archdr.ar_fmag,ARFMAG,strlen(ARFMAG)) != 0)
-			  fatal("error in archive format: %s",filename);
+//			if (strncmp(archdr.ar_fmag,ARFMAG,strlen(ARFMAG)) != 0)
+//				fatal("error in archive format: %s",filename);
 			position += sizeof(archdr);
 			if (load1(position, 1)) {		/* arc pass1 */
 				arce ae = (arce)calloc(1, sizeof(*ae));
