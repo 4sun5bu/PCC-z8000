@@ -4,7 +4,7 @@
 #include <stdarg.h>
 
 #include "ar.h"
-#include "./b.out.h"
+#include "aout.h"
 
 /* link editor for Z8000 */
 
