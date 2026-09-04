@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "mical.h"
 #include "inst.h"
 
@@ -227,6 +230,7 @@ char *Source_name = NULL;
 char File_name[STR_MAX];
 
 Init(argc,argv)
+int argc;
 char *argv[];
 {	register int i,j;
 	char *strncpy();
@@ -234,39 +238,43 @@ char *argv[];
 
 	argv++;
 	while (--argc > 0) {
-	  if (argv[0][0] == '-') switch (argv[0][1]) {
-	    case 'o':	O_outfile++;
-			if (!argv[1]) {
-				fprintf(stderr, "Otput file name not given\n");
-				exit(1);
+		if (argv[0][0] == '-')
+			switch (argv[0][1]) {
+			case 'o':
+				O_outfile++;
+				if (!argv[1]) {
+					fprintf(stderr, "Output file name not given\n");
+					exit(1);
+				}
+				Concat(Rel_name,argv[1],"");
+				argv++; argc--;
+				break;
+
+			case 'c':
+				Cflag++;
+				break;
+
+			default:
+				fprintf(stderr,"Unknown option '%c' ignored.\n",argv[0][1]);
+		} else if (Source_name != NULL) {
+			fprintf(stderr,"Too many file names given\n");
+		} else {
+			Source_name = argv[0];
+			Concat(File_name, argv[0], ".s");
+			if (freopen(File_name,"r",stdin) == NULL) {
+				if ((end = rindex(Source_name, '.')) == 0 ||
+				strcmp(end, ".s") != 0) {
+					fprintf(stderr,"Can't open source file: %s\n",File_name);
+					exit(1);
+				}
+				strncpy(File_name, argv[0], STR_MAX);
+				if (freopen(File_name,"r",stdin) == NULL) {
+					fprintf(stderr,"Can't open source file: %s\n",File_name);
+					exit(1);
+				}
 			}
-			Concat(Rel_name,argv[1],"");
-			argv++; argc--;
-			break;
-
-	    case 'c':	Cflag++;
-			break;
-
-	    default:	fprintf(stderr,"Unknown option '%c' ignored.\n",argv[0][1]);
-	  } else if (Source_name != NULL) {
-	    fprintf(stderr,"Too many file names given\n");
-	  } else {
-	    Source_name = argv[0];
-	    Concat(File_name, argv[0], ".az8");
-	    if (freopen(File_name,"r",stdin) == NULL) {
-	      if ((end = rindex(Source_name, '.')) == 0 ||
-			strcmp(end, ".az8") != 0) {
-	        fprintf(stderr,"Can't open source file: %s\n",File_name);
-	        exit(1);
-	      }
-	      strncpy(File_name, argv[0], STR_MAX);
-	      if (freopen(File_name,"r",stdin) == NULL) {
-	        fprintf(stderr,"Can't open source file: %s\n",File_name);
-	        exit(1);
-	      }
-	    }
-	  }
-	  argv++;
+		}
+		argv++;
 	}
 
 	if (!Source_name) {
@@ -275,20 +283,21 @@ char *argv[];
 	}
 
 /* Check to see if we can open output file */
-	if(!O_outfile)
-	{
-		if ((end = rindex(Source_name, '.')) == 0 ||
-			strcmp(end, ".az8") != 0)
-			Concat(Rel_name,Source_name,".b");
-		else	/* copy basename without .az8 to Rel_name */
-		{
+	if(!O_outfile) {
+#if 0
+		if ((end = rindex(Source_name, '.')) == 0 || strcmp(end, ".s") != 0)
+			Concat(Rel_name,Source_name,".o");
+		else {	/* copy basename without .s to Rel_name */
 			for (cp1 = Source_name, cp2 = Rel_name; cp1 < end;)
 				*cp2++ = *cp1++;
-			strcpy(cp2, ".b");
+			strcpy(cp2, ".o");
 		}
+#else
+		strcpy(Rel_name, "a.out");
+#endif
 	}
-	if ((Rel_file = fopen(Rel_name,"w")) == NULL)
-	{	printf("Can't create output file: %s\n",Rel_name);
+	if ((Rel_file = fopen(Rel_name,"w")) == NULL) {
+		printf("Can't create output file: %s\n",Rel_name);
 		exit(1);
 	}
 	fclose(Rel_file);	/* Rel_Header will open properly */
@@ -388,7 +397,6 @@ Concat(s1,s2,s3)
 	s1--;
 	while (*s1++ = *s3++);
 }
-
 
 /*
  * Return the ptr in sp at which the character c last

@@ -1,5 +1,5 @@
 #include "mical.h"
-#include "../b.out.h"
+#include "../a.out.h"
 
 /*  Handle output file processing for a.out files
  *  Adapted from 68000 version for Z8000.
@@ -19,7 +19,7 @@ long rdsize;		/* size of data relocation area */
 
 char rname[STR_MAX];	/* name of file for relocation commands */
 
-struct bhdr filhdr;	/* header for b.out files, contains sizes */
+struct bhdr filhdr;	/* header for a.out files, contains sizes */
 
 /* Initialize files for output and write out the header.
  * Symbols are deferred to Fix_Rel() (written after relocation in a.out order).

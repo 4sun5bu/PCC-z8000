@@ -1,5 +1,5 @@
 #include "mical.h"
-#include "../b.out.h"
+#include "../a.out.h"
 
 /* Allocation increments for symbol buckets and character blocks */
 #define	SYM_INCR	50

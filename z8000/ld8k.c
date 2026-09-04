@@ -4,7 +4,7 @@
 #include <stdarg.h>
 
 #include "ar.h"
-#include "aout.h"
+#include "a.out.h"
 
 /* link editor for Z8000 */
 
@@ -196,8 +196,7 @@ procargs(argc, argv)
 int argc;
 char **argv;
 {
-	for (argnum = 1; argnum < argc; argnum++)	/* for each arg */
-	{
+	for (argnum = 1; argnum < argc; argnum++) {	/* for each arg */
 		if (argv[argnum][0] == '-')
 			procflags(argc, argv);
 		else
@@ -270,16 +269,26 @@ char **argv;
 			else
 				torigin = atox(argv[argnum]);
 			break;
-		case 'l': newarg(argv[argnum]); return;
-		case 'x': xflag++; break;
-		case 'X': Xflag++; break;
-		case 'S': Sflag++; break;
-		case 'r': rflag++; break;
-		case 's': sflag++; xflag++; break;
-		case 'd': dflag++; break;
-		case 'n': nflag++; break;
-		case 'i': iflag++; break;
-		default:	error(e2, c);
+		case 'l':
+			newarg(argv[argnum]); return;
+		case 'x':
+			xflag++; break;
+		case 'X':
+			Xflag++; break;
+		case 'S':
+			Sflag++; break;
+		case 'r':
+			rflag++; break;
+		case 's':
+			sflag++; xflag++; break;
+		case 'd':
+			dflag++; break;
+		case 'n':
+			nflag++; break;
+		case 'i':
+			iflag++; break;
+		default:
+			error(e2, c);
 		}
 }
 
@@ -326,8 +335,8 @@ register char *cp;
 		position = SARMAG;
 		fseek(text, (long)SARMAG, 0);	/* skip magic word */
 		while (fread(&archdr, sizeof archdr, 1, text) && !feof(text)) {
-//			if (strncmp(archdr.ar_fmag,ARFMAG,strlen(ARFMAG)) != 0)
-//				fatal("error in archive format: %s",filename);
+			/* if (strncmp(archdr.ar_fmag,ARFMAG,strlen(ARFMAG)) != 0)
+				fatal("error in archive format: %s",filename); */
 			position += sizeof(archdr);
 			if (load1(position, 1)) {		/* arc pass1 */
 				arce ae = (arce)calloc(1, sizeof(*ae));
@@ -830,9 +839,12 @@ register struct reloc *r;
 			fprintf(stderr, "DEBUG relext: bdevsw offs=0x%lx stype=0x%x rsymbol=%d rpos=0x%lx\n",
 				offs, sp->s.stype, r->rsymbol, r->rpos);
 		switch(sp->s.stype & 037) {
-		case TEXT: (r->rinfo & ~RSEGMNT) | RTEXT; break;
-		case DATA: (r->rinfo & ~RSEGMNT) | RDATA; break;
-		case BSS: (r->rinfo & ~RSEGMNT) | RBSS; break;
+		case TEXT:
+			(r->rinfo & ~RSEGMNT) | RTEXT; break;
+		case DATA:
+			(r->rinfo & ~RSEGMNT) | RDATA; break;
+		case BSS:
+			(r->rinfo & ~RSEGMNT) | RBSS; break;
 		case UNDEF:
 			if (rflag && (sp->s.stype & EXTERN)) {
 				r->rinfo = (r->rinfo & ~RSEGMNT) | REXT;
