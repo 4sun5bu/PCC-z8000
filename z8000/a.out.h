@@ -68,11 +68,11 @@
 
 /* macros which define various positions in file based on a bhdr, filhdr */
 #define TEXTPOS		HDRSIZE
-#define DATAPOS 	TEXTPOS + filhdr.tsize
-#define RTEXTPOS	DATAPOS + filhdr.dsize
-#define RDATAPOS	RTEXTPOS + filhdr.trsize
-#define SYMPOS		RDATAPOS + filhdr.drsize
-#define ENDPOS		SYMPOS + filhdr.ssize
+#define DATAPOS 	TEXTPOS + filhdr.a_text
+#define RTEXTPOS	DATAPOS + filhdr.a_data
+#define RDATAPOS	RTEXTPOS + filhdr.a_rtsiz
+#define SYMPOS		RDATAPOS + filhdr.a_rdsiz
+#define ENDPOS		SYMPOS + filhdr.a_syms
 
 /* header of a.out files (internal representation, fields are long for convenience) */
 struct bhdr {
@@ -84,6 +84,17 @@ struct bhdr {
 	long	entry;
 	long	trsize;
 	long	drsize;
+};
+
+struct exec {
+	short	a_magic;
+	unsigned short a_text;
+	unsigned short a_data;
+	unsigned short a_bss;
+	unsigned short a_syms;
+	unsigned short a_entry;
+	unsigned short a_rtsiz;
+	unsigned short a_rdsiz;
 };
 
 /* symbol management (internal representation) */
@@ -99,7 +110,7 @@ struct reloc {
 /*	char rsize:2;		 RBYTE, RWORD, or RLONG */
 /*	char rdisp:1;		 1 => a displacement */
 	short rsymbol;		/* id of the symbol of external relocations */
-	long rpos;			/* position of relocation in segment */
+	long rpos;		/* position of relocation in segment */
 };
 
 /* Stuff for unix compatibility */

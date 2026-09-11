@@ -19,7 +19,7 @@ long rdsize;		/* size of data relocation area */
 
 char rname[STR_MAX];	/* name of file for relocation commands */
 
-struct bhdr filhdr;	/* header for a.out files, contains sizes */
+struct exec filhdr;	/* header for a.out files, contains sizes */
 
 /* Initialize files for output and write out the header.
  * Symbols are deferred to Fix_Rel() (written after relocation in a.out order).
@@ -35,24 +35,24 @@ Rel_Header()
 	if ((rtout = fopen(rname, "w")) == NULL
 	 || (rdout = fopen(rname, "r+")) == NULL)
 		Sys_Error("open on output file %s failed", rname);
-	filhdr.fmagic = FMAGIC;
-	filhdr.tsize = tsize;
-	filhdr.dsize = dsize;
-	filhdr.bsize = bsize;
-	filhdr.ssize = 0;
-	filhdr.entry = 0;
-	filhdr.trsize = rtsize;
-	filhdr.drsize = rdsize;
+	filhdr.a_magic = FMAGIC;
+	filhdr.a_text = tsize;
+	filhdr.a_data = dsize;
+	filhdr.a_bss = bsize;
+	filhdr.a_syms = 0;
+	filhdr.a_entry = 0;
+	filhdr.a_rtsiz = rtsize;
+	filhdr.a_rdsiz = rdsize;
 
 	fseek(tout, 0L, 0);
-	put68(tout, &filhdr.fmagic, 2);
-	put68(tout, &filhdr.tsize, 2);
-	put68(tout, &filhdr.dsize, 2);
-	put68(tout, &filhdr.bsize, 2);
-	put68(tout, &filhdr.ssize, 2);
-	put68(tout, &filhdr.entry, 2);
-	put68(tout, &filhdr.trsize, 2);
-	put68(tout, &filhdr.drsize, 2);
+	put68(tout, &filhdr.a_magic, 2);
+	put68(tout, &filhdr.a_text, 2);
+	put68(tout, &filhdr.a_data, 2);
+	put68(tout, &filhdr.a_bss, 2);
+	put68(tout, &filhdr.a_syms, 2);
+	put68(tout, &filhdr.a_entry, 2);
+	put68(tout, &filhdr.a_rtsiz, 2);
+	put68(tout, &filhdr.a_rdsiz, 2);
 
 	fseek(tout, (long)(TEXTPOS), 0);	/* seek to start of text */
 	fseek(dout, (long)(DATAPOS), 0);
@@ -72,9 +72,9 @@ Fix_Rel()
 	long Sym_Write();
 	register FILE *fin, *fout;
 
-	ortsize = filhdr.trsize;
-	filhdr.trsize = rtsize;
-	filhdr.drsize = rdsize;
+	ortsize = filhdr.a_rtsiz;
+	filhdr.a_rtsiz = rtsize;
+	filhdr.a_rdsiz = rdsize;
 	fclose(rtout);
 	fclose(rdout);
 	if ((fin = fopen(rname, "r")) == NULL)
@@ -93,18 +93,18 @@ Fix_Rel()
 		putc(getc(fin), fout);
 
 	/* write symbols after relocation (a.out order) */
-	filhdr.ssize = Sym_Write(fout);
+	filhdr.a_syms = Sym_Write(fout);
 
 	/* now re-write header */
 	fseek(fout, 0, 0);
-	put68(tout, &filhdr.fmagic, 2);
-	put68(tout, &filhdr.tsize, 2);
-	put68(tout, &filhdr.dsize, 2);
-	put68(tout, &filhdr.bsize, 2);
-	put68(tout, &filhdr.ssize, 2);
-	put68(tout, &filhdr.entry, 2);
-	put68(tout, &filhdr.trsize, 2);
-	put68(tout, &filhdr.drsize, 2);
+	put68(tout, &filhdr.a_magic, 2);
+	put68(tout, &filhdr.a_text, 2);
+	put68(tout, &filhdr.a_data, 2);
+	put68(tout, &filhdr.a_bss, 2);
+	put68(tout, &filhdr.a_syms, 2);
+	put68(tout, &filhdr.a_entry, 2);
+	put68(tout, &filhdr.a_rtsiz, 2);
+	put68(tout, &filhdr.a_rdsiz, 2);
 	fclose(fin);
 	unlink(rname);
 }

@@ -47,35 +47,35 @@ struct arc_link
 
 /* global variables */
 arg arglist;				/* linked list of arguments */
-struct ar_hdr archdr;		/* directory part of archive */
-arcp arclist = NULL;		/* list of archives */
-arcp arclast = NULL;		/* last archive on arclist */
-arce arcelast = NULL;		/* last entry in this entry list */
-struct bhdr filhdr;			/* header file for current file */
-struct symbol cursym;		/* current symbol */
-char csymbuf[SYMLENGTH];	/* buffer for current symbol name */
-struct symbol symtab[NSYM];	/* actual symbols */
+struct ar_hdr archdr;			/* directory part of archive */
+arcp arclist = NULL;			/* list of archives */
+arcp arclast = NULL;			/* last archive on arclist */
+arce arcelast = NULL;			/* last entry in this entry list */
+struct exec filhdr;			/* header file for current file */
+struct symbol cursym;			/* current symbol */
+char csymbuf[SYMLENGTH];		/* buffer for current symbol name */
+struct symbol symtab[NSYM];		/* actual symbols */
 symp lastsym;				/* last symbol entered */
 int symindex;				/* next available symbol table entry */
-symp hshtab[NSYM+2];		/* hash table for symbols */
+symp hshtab[NSYM+2];			/* hash table for symbols */
 symp local[NSYMPR];			/* symbols in current file */
-int nloc;					/* number of local symbols per file */
+int nloc;				/* number of local symbols per file */
 int nund = 0;				/* number of undefined syms in pass 2*/
 symp entrypt;				/* pointer to entry point symbol */
-int argnum;					/* current argument number */
-char ldz8[] = "ldz8 -- link editor for Z8000";
-char *ofilename = "a.out";	/* name of output file, default init */
-FILE *text;					/* file descriptor for input file */
+int argnum;				/* current argument number */
+char ldz8[] = "ld8k -- link editor for Z8000";
+char *ofilename = "a.out";		/* name of output file, default init */
+FILE *text;				/* file descriptor for input file */
 FILE *rtext;				/* used to access relocation */
 char *filename;				/* name of current input file */
 char libname[64];			/* name of current library */
 #ifdef z8000
-char libdir[64] = "/lib/lib";	/* prefix for -l libraries */
+char libdir[64] = "/lib/lib";		/* prefix for -l libraries */
 #else
 char libdir[64] = "/projects/nunix/lib/lib";	/* prefix for -l libraries */
 #endif
-FILE *tout;					/* text portion */
-FILE *dout;					/* data portion */
+FILE *tout;				/* text portion */
+FILE *dout;				/* data portion */
 FILE *trout;				/* text relocation commands */
 FILE *drout;				/* data relocation commands */
 
@@ -97,10 +97,10 @@ long borigin;		/* origin of bss segment in final output */
 long corigin;		/* origin of common area */
 
 /* cumulative sizes set in pass 1 */
-long tsize;			/* size of text data */
-long dsize;			/* size of data segment */
-long bsize;			/* size of bss segment */
-long csize;			/* size of common area */
+long tsize;		/* size of text data */
+long dsize;		/* size of data segment */
+long bsize;		/* size of bss segment */
+long csize;		/* size of common area */
 long rtsize;		/* size of text relocation area */
 long rdsize;		/* size of data relocation area */
 long ssize = 0;		/* size of symbol area */
@@ -387,18 +387,18 @@ int libflg;	/* 1 => loading a library, 0 else */
 	savindex = symindex;
 	loc += SYMPOS;
 	fseek(text,loc, 0);	/* skip to symbols */
-	endpos = loc + filhdr.ssize;
+	endpos = loc + filhdr.a_syms;
 	while (loc < endpos) {
 		loc += getsym();
 		ndef += sym1();	/* process one symbol */
 	}
 	if (libflg==0 || ndef) {
-		tsize += filhdr.tsize;
-		dsize += filhdr.dsize;
-		bsize += filhdr.bsize;
+		tsize += filhdr.a_text;
+		dsize += filhdr.a_data;
+		bsize += filhdr.a_bss;
 		ssize += nloc;			/* count local symbols */
-		rtsize += filhdr.trsize;
-		rdsize += filhdr.drsize;
+		rtsize += filhdr.a_rtsiz;
+		rdsize += filhdr.a_rdsiz;
 		return(1);
 	}
 
@@ -430,9 +430,9 @@ sym1()
 	default:
 		return(0);
 	}
-	if ((type&EXTERN) == 0) {
+	if ((type & EXTERN) == 0) {
 		if (xflag || (Xflag && (cursym.sname[0] == '.')
-			&& (cursym.sname[1] == 'L')));
+		   && (cursym.sname[1] == 'L')));	/* TODO check nothing to do anything here */
 		else
 			nloc += NLIST_DISKSIZE;
 		return(0);
@@ -541,7 +541,7 @@ register symp sp;
 	case EXTERN+UNDEF:
 		if ((rflag == 0 || dflag) && sp->s.svalue == 0) {
 			if (nund==0)
-				printf("ldz8: Undefined -\n");
+				printf("ld8k: Undefined -\n");
 			nund++;
 			printf("\t%s\n", sp->sname);
 		}
@@ -606,25 +606,25 @@ int  type;			/* its type */
 setupout()
 {
 	if (nflag)
-		filhdr.fmagic = NMAGIC;
+		filhdr.a_magic = NMAGIC;
 	else if (iflag)
-		filhdr.fmagic = IMAGIC;
+		filhdr.a_magic = IMAGIC;
 	else
-		filhdr.fmagic = FMAGIC;
-	filhdr.tsize = tsize;
-	filhdr.dsize = dsize;
-	filhdr.bsize = bsize;
-	filhdr.trsize = rflag? rtsize: 0;
-	filhdr.drsize = rflag? rdsize: 0;
-	filhdr.ssize = sflag? 0:ssize;
+		filhdr.a_magic = FMAGIC;
+	filhdr.a_text = tsize;
+	filhdr.a_data = dsize;
+	filhdr.a_bss = bsize;
+	filhdr.a_rtsiz = rflag? rtsize: 0;
+	filhdr.a_rdsiz = rflag? rdsize: 0;
+	filhdr.a_syms = sflag? 0:ssize;
 	if (entrypt) {
 		if (entrypt->s.stype!=EXTERN+TEXT)
 			error(e7);
 		else
-			filhdr.entry = entrypt->s.svalue;
+			filhdr.a_entry = entrypt->s.svalue;
 	} else
-		filhdr.entry = 0;
-	filhdr.entry = torigin;
+		filhdr.a_entry = 0;
+	filhdr.a_entry = torigin;
 	if ((tout = fopen(ofilename, "w")) == NULL)
 		fatal(e8, ofilename);
 	if ((dout = fopen(ofilename, "r+")) == NULL)
@@ -638,14 +638,14 @@ setupout()
 			fatal(e9);
 		fseek(drout, (long)RDATAPOS, 0);	/* to data reloc */
 	}
-	put68(tout, &filhdr.fmagic, 2);
-	put68(tout, &filhdr.tsize, 2);
-	put68(tout, &filhdr.dsize, 2);
-	put68(tout, &filhdr.bsize, 2);
-	put68(tout, &filhdr.ssize, 2);
-	put68(tout, &filhdr.entry, 2);
-	put68(tout, &filhdr.trsize, 2);
-	put68(tout, &filhdr.drsize, 2);
+	put68(tout, &filhdr.a_magic, 2);
+	put68(tout, &filhdr.a_text, 2);
+	put68(tout, &filhdr.a_data, 2);
+	put68(tout, &filhdr.a_bss, 2);
+	put68(tout, &filhdr.a_syms, 2);
+	put68(tout, &filhdr.a_entry, 2);
+	put68(tout, &filhdr.a_rtsiz, 2);
+	put68(tout, &filhdr.a_rdsiz, 2);
 }
 /* load2arg -	Load a named file or an archive */
 
@@ -657,14 +657,14 @@ char *cp;
 	switch (getfile(cp)) {
 	case FMAGIC:			/* normal file */
 		short tmp;
-		get68(text, &tmp, 2); filhdr.fmagic = tmp;
-		get68(text, &tmp, 2); filhdr.tsize = tmp;
-		get68(text, &tmp, 2); filhdr.dsize = tmp;
-		get68(text, &tmp, 2); filhdr.bsize = tmp;
-		get68(text, &tmp, 2); filhdr.ssize = tmp;
-		get68(text, &tmp, 2); filhdr.entry = tmp;
-		get68(text, &tmp, 2); filhdr.trsize = tmp;
-		get68(text, &tmp, 2); filhdr.drsize = tmp;
+		get68(text, &tmp, 2); filhdr.a_magic = tmp;
+		get68(text, &tmp, 2); filhdr.a_text = tmp;
+		get68(text, &tmp, 2); filhdr.a_data = tmp;
+		get68(text, &tmp, 2); filhdr.a_bss = tmp;
+		get68(text, &tmp, 2); filhdr.a_syms = tmp;
+		get68(text, &tmp, 2); filhdr.a_entry = tmp;
+		get68(text, &tmp, 2); filhdr.a_rtsiz = tmp;
+		get68(text, &tmp, 2); filhdr.a_rdsiz = tmp;
 		load2(0L);
 		break;
 	case ARCMAGIC:			/* archive */
@@ -672,14 +672,14 @@ char *cp;
 			short tmp;
 			position = entry->arc_offs;
 			fseek(text, position, 0);
-			get68(text, &tmp, 2); filhdr.fmagic = tmp;
-			get68(text, &tmp, 2); filhdr.tsize = tmp;
-			get68(text, &tmp, 2); filhdr.dsize = tmp;
-			get68(text, &tmp, 2); filhdr.bsize = tmp;
-			get68(text, &tmp, 2); filhdr.ssize = tmp;
-			get68(text, &tmp, 2); filhdr.entry = tmp;
-			get68(text, &tmp, 2); filhdr.trsize = tmp;
-			get68(text, &tmp, 2); filhdr.drsize = tmp;
+			get68(text, &tmp, 2); filhdr.a_magic = tmp;
+			get68(text, &tmp, 2); filhdr.a_text = tmp;
+			get68(text, &tmp, 2); filhdr.a_data = tmp;
+			get68(text, &tmp, 2); filhdr.a_bss = tmp;
+			get68(text, &tmp, 2); filhdr.a_syms = tmp;
+			get68(text, &tmp, 2); filhdr.a_entry = tmp;
+			get68(text, &tmp, 2); filhdr.a_rtsiz = tmp;
+			get68(text, &tmp, 2); filhdr.a_rdsiz = tmp;
 			load2(position);		/* load the file */
 		}
 		arclist = arclist->arc_next;
@@ -712,7 +712,7 @@ long sloc;	/* position of filhdr in current input file */
 	 */
 	loc += SYMPOS;
 	fseek(text, loc, 0);
-	endpos = loc + filhdr.ssize;
+	endpos = loc + filhdr.a_syms;
 	while(loc < endpos) {
 		loc += getsym();
 		if (++symno >= NSYMPR)
@@ -746,14 +746,14 @@ long sloc;	/* position of filhdr in current input file */
 	}
 	fseek(text, sloc+TEXTPOS, 0);
 	fseek(rtext, sloc+RTEXTPOS, 0);
-	load2td(tout, trout, torigin, filhdr.tsize, filhdr.trsize);
+	load2td(tout, trout, torigin, filhdr.a_text, filhdr.a_rtsiz);
 	fseek(text, sloc+DATAPOS, 0);
 	fseek(rtext, sloc+RDATAPOS, 0);
-	load2td(dout, drout, doffset, filhdr.dsize, filhdr.drsize);
-	torigin += filhdr.tsize;
-	dorigin += filhdr.dsize;
-	doffset += filhdr.dsize;
-	borigin += filhdr.bsize;
+	load2td(dout, drout, doffset, filhdr.a_data, filhdr.a_rdsiz);
+	torigin += filhdr.a_text;
+	dorigin += filhdr.a_data;
+	doffset += filhdr.a_data;
+	borigin += filhdr.a_bss;
 }
 /* load the text or data section of a file performing relocation */
 load2td(outf, outrf, txtstart, txtsize, rsize)
@@ -786,10 +786,10 @@ long rsize;		/* size of appropriate relocation data */
 			offs = torigin;
 			break;
 		case RDATA:
-			offs = dorigin - filhdr.tsize;
+			offs = dorigin - filhdr.a_text;
 			break;
 		case RBSS:
-			offs = borigin - (filhdr.tsize + filhdr.dsize);
+			offs = borigin - (filhdr.a_text + filhdr.a_data);
 			break;
 		}
 		if (rel.rinfo & RDISP)
@@ -1093,22 +1093,22 @@ long pos;
 	register long st, sd;
 	short tmp;
 	fseek(text, pos, 0);
-	get68(text, &tmp, 2); filhdr.fmagic = tmp;
-	get68(text, &tmp, 2); filhdr.tsize = tmp;
-	get68(text, &tmp, 2); filhdr.dsize = tmp;
-	get68(text, &tmp, 2); filhdr.bsize = tmp;
-	get68(text, &tmp, 2); filhdr.ssize = tmp;
-	get68(text, &tmp, 2); filhdr.entry = tmp;
-	get68(text, &tmp, 2); filhdr.trsize = tmp;
-	get68(text, &tmp, 2); filhdr.drsize = tmp;
-	if (filhdr.fmagic != FMAGIC)
+	get68(text, &tmp, 2); filhdr.a_magic = tmp;
+	get68(text, &tmp, 2); filhdr.a_text = tmp;
+	get68(text, &tmp, 2); filhdr.a_data = tmp;
+	get68(text, &tmp, 2); filhdr.a_bss = tmp;
+	get68(text, &tmp, 2); filhdr.a_syms = tmp;
+	get68(text, &tmp, 2); filhdr.a_entry = tmp;
+	get68(text, &tmp, 2); filhdr.a_rtsiz = tmp;
+	get68(text, &tmp, 2); filhdr.a_rdsiz = tmp;
+	if (filhdr.a_magic != FMAGIC)
 		error(e5, filename);
-	st = (filhdr.tsize+1) & ~1;
-	filhdr.tsize = st;
+	st = (filhdr.a_text+1) & ~1;
+	filhdr.a_text = st;
 	cdrel = -st;
-	sd = (filhdr.dsize+1) & ~1;
+	sd = (filhdr.a_data+1) & ~1;
 	cbrel = - (st + sd);
-	filhdr.bsize = (filhdr.bsize+1) & ~1;
+	filhdr.a_bss = (filhdr.a_bss+1) & ~1;
 }
 /* getsym -	Read a 12-byte nlist entry from text, leaving data in cursym.
 		Returns NLIST_DISKSIZE (12). */
@@ -1177,7 +1177,7 @@ void error(char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	printf("ldz8: ");
+	printf("ld8k: ");
 	vprintf(fmt, ap);
 	printf("\n");
 	va_end(ap);

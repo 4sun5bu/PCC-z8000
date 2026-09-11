@@ -42,13 +42,13 @@ char	*ldrel = NULL;	/* -R argument for loader */
 # ifndef z8000		/* cross-compiling from PDP11, VAX, or 68000 */
 char	pref[64]  = "/projects/nunix/lib/crt0.b";
 char	incld[64] = "-I/projects/nunix/include";
-char	*az8 = "/usr/local/bin/az8";
-char	*ldz8 = "/usr/local/bin/ldz8";
+char	*as8k = "/usr/local/bin/as8k";
+char	*ld8k = "/usr/local/bin/ld8k";
 # else			/* native Z8000 */
 char	pref[64]  = "/lib/crt0.b";
 char	incld[64] = "-I/usr/include";
-char	*az8 = "/usr/local/az8";
-char	*ldz8 = "/usr/local/ldz8";
+char	*as8k = "/usr/local/as8k";
+char	*ld8k = "/usr/local/ld8k";
 # endif
 char	*copy();
 char	*getsuf();
@@ -87,8 +87,8 @@ char *argv[];
 			if (++i < argc) {
 				outfile = argv[i];
 				if (strcmp((s = getsuf(outfile)), "c") == 0 ||
-				    strcmp(s, "b") == 0 ||
-				    strcmp(s, "az8") == 0) {
+				    strcmp(s, "o") == 0 ||
+				    strcmp(s, "s") == 0) {
 					error("Would overwrite %s", outfile);
 					exit(8);
 				}
@@ -170,14 +170,14 @@ char *argv[];
 passa:
 			t = argv[i];
 			if(strcmp((s = getsuf(t)), "c") == 0 ||
-			   strcmp(s, "az8") == 0 ||
+			   strcmp(s, "s") == 0 ||
 			   exflag) {
 				clist[nc++] = t;
 				if (nc>=MAXFIL) {
 					error("Too many source files", (char *)NULL);
 					exit(1);
 				}
-				t = setsuf(t, "b");
+				t = setsuf(t, "o");
 			}
 			if (nodup(llist, t)) {
 				llist[nl++] = t;
@@ -185,7 +185,7 @@ passa:
 					error("Too many object/library files", (char *)NULL);
 					exit(1);
 				}
-				if (strcmp(getsuf(t), "b") == 0)
+				if (strcmp(getsuf(t), "o") == 0)
 					nxo++;
 			}
 		}
@@ -224,7 +224,7 @@ passa:
 	(tmp1 = copy(tmp0))[8] = '1';
 	(tmp2 = copy(tmp0))[8] = '2';
 	(tmp3 = copy(tmp0))[8] = '3';
-	strcat(tmp3, ".az8");
+	strcat(tmp3, ".s");
 	if (oflag)
 		(tmp5 = copy(tmp0))[8] = '5';
 	if (pflag==0)
@@ -233,7 +233,7 @@ passa:
 	for (i=0; i<nc; i++) {
 		if (nc>1)
 			printf("%s:\n", clist[i]);
-		if (strcmp(getsuf(clist[i]), "az8") == 0) {
+		if (strcmp(getsuf(clist[i]), "s") == 0) {
 			assource = clist[i];
 			goto assemble;
 		}
@@ -269,7 +269,7 @@ passa:
 		    av[j++] = "-f";
 		av[j++] = 0;
 		if (sflag)
-		    assource = tmp3 = setsuf(clist[i], "az8");
+		    assource = tmp3 = setsuf(clist[i], "s");
 		if (callsys(pass0, av, tmp4, oflag ? tmp5 : tmp3)) {
 			cflag++;
 			eflag++;
@@ -281,7 +281,7 @@ passa:
 		    av[0] = "oz8";
 		    av[1] = 0;
 		    if (sflag)
-			assource = tmp3 = setsuf(clist[i], "az8");
+			assource = tmp3 = setsuf(clist[i], "s");
 		    if(callsys(pass1, av, tmp5, tmp3)) {
 			cflag++;
 			eflag++;
@@ -292,15 +292,15 @@ passa:
 		if (sflag)
 			continue;
 assemble:
-		av[0] = "az8";
+		av[0] = "s";
 		av[1] = "-o";
-		av[2] = setsuf(clist[i], "b");
+		av[2] = setsuf(clist[i], "o");
 		av[3] = assource;
 		av[4] = 0;
 		cunlink(tmp1);
 		cunlink(tmp2);
 		cunlink(tmp4);
-		if (callsys(az8, av, 0, 0) > 1) {
+		if (callsys(as8k, av, 0, 0) > 1) {
 			cflag++;
 			eflag++;
 			continue;
@@ -311,7 +311,7 @@ assemble:
 nocom:
 	if (cflag==0 && nl!=0) {
 		i = 0;
-		av[0] = "ldz8";
+		av[0] = "ld8k";
 		av[1] = "-x";
 		av[2] = pref;
 		av[3] = "-R";
@@ -334,9 +334,9 @@ nocom:
 		}
 		av[j++] = "-lc";
 		av[j++] = 0;
-		eflag |= callsys(ldz8, av, 0, 0);
+		eflag |= callsys(ld8k, av, 0, 0);
 		if (nc==1 && nxo==1 && eflag==0)
-			cunlink(setsuf(clist[0], "b"));
+			cunlink(setsuf(clist[0], "o"));
 	}
 	dexit();
 }
@@ -353,7 +353,7 @@ dexit()
 		cunlink(tmp1);
 		cunlink(tmp2);
 		if (sflag==0)
-		    cunlink(tmp3);
+			cunlink(tmp3);
 		cunlink(tmp4);
 		cunlink(tmp5);
 		cunlink(tmp0);
@@ -369,9 +369,6 @@ char *s, *x;
 	cflag++;
 	eflag++;
 }
-
-
-
 
 char *
 getsuf(s)
@@ -418,31 +415,30 @@ char *as, *cp;
 		*s2++ = '.';
 	}
 	do
-	    *s2++ = *cp;
+		*s2++ = *cp;
 	while (*cp++);
 	return(s1);
 }
-
 
 xopen(fp, m)
 char *fp;
 {
 int	fd;
 
-    switch (m) {
-    case 0:
-	return(open(fp, 0));
-	break;
-    case 1:
-	return(creat(fp, 0666));
-	break;
-    case 2:
-	if ( (fd = creat(fp, 0666)) < 0)
-	    return(fd);
-	close(fd);
-	return(open(fp, 0));
-	break;
-    }
+	switch (m) {
+	case 0:
+		return(open(fp, 0));
+		break;
+	case 1:
+		return(creat(fp, 0666));
+		break;
+	case 2:
+		if ( (fd = creat(fp, 0666)) < 0)
+		return(fd);
+		close(fd);
+		return(open(fp, 0));
+		break;
+	}
 }
 
 
@@ -454,18 +450,18 @@ char	*si, *so;
 
 	if ((t=fork())==0) {
 		if (si) {
-		    close(0);
-		    if (xopen(si, 0) < 0) {
-			fprintf(stderr, "couldn't open %s\n", si);
-			exit(100);
-		    }
+			close(0);
+			if (xopen(si, 0) < 0) {
+				fprintf(stderr, "couldn't open %s\n", si);
+				exit(100);
+			}
 		}
 		if (so) {
-		    close(1);
-		    if (xopen(so, 1) < 0) {
-			fprintf(stderr, "couldn't open %s\n", so);
-			exit(100);
-		    }
+			close(1);
+			if (xopen(so, 1) < 0) {
+				fprintf(stderr, "couldn't open %s\n", so);
+				exit(100);
+			}
 		}
 		execv(f, v);
 		fprintf(stderr, "Can't find %s\n", f);
