@@ -142,23 +142,17 @@ bfcode( a, n ) int a[]; {
 		printf( "	ld	r0,#.L%d\n", plab );
 		printf( "	call	mcount\n" );
 		printf( "	.data\n.L%d:	.word 0\n	.text\n", plab );
-		}
+	}
 
 	/* routine prolog */
 	/* push R13, ld R13,SP, sub SP,#framesize */
 
-	printf( "	push	@sp,r13\n" );
-	printf( "	ld	r13,sp\n" );
+	printf( "	push	@sp,r14\n" );
+	printf( "	ld	r14,sp\n" );
 	printf( "	sub	sp,#_F%d\n", ftnno );
-	/* save callee-saved regs at fixed offsets from FP (R13) */
-	printf( "	ld	-2(r13),r4\n" );
-	printf( "	ld	-4(r13),r5\n" );
-	printf( "	ld	-6(r13),r6\n" );
-	printf( "	ld	-8(r13),r7\n" );
-	printf( "	ld	-10(r13),r10\n" );
-	printf( "	ld	-12(r13),r11\n" );
-	printf( "	ld	-14(r13),r12\n" );
-	printf( "	ld	-16(r13),r14\n" );
+	/* save callee-saved regs at fixed offsets from FP (R14) */
+	printf( "	ldm	-20(r14),r4,#10\n" );
+
 	usedregs = 0;
 
 	off = ARGINIT;
@@ -172,10 +166,10 @@ bfcode( a, n ) int a[]; {
 			oalloc( p, &off );
 			/* load param into register */
 			if (p->stype==CHAR || p->stype==UCHAR)
-				printf( "	ldb	%s,%d(r13)\n",
+				printf( "	ldb	%s,%d(r14)\n",
 				  rnames[temp], p->offset/SZCHAR );
 			else
-				printf( "	ld	%s,%d(r13)\n",
+				printf( "	ld	%s,%d(r14)\n",
 				  rnames[temp], p->offset/SZCHAR );
 			usedregs |= 1<<temp;
 			p->offset = temp;  /* remember register number */

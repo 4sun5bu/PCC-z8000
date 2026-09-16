@@ -36,6 +36,7 @@ eobl2(){
 	printf( ".L%d:\n", retlab );
 
 	/* restore only the callee-saved registers that were actually used */
+#if 0
 	if( savemask ){
 		if( savemask & (1<<4) ) printf( "	ld	r4,-2(r13)\n" );
 		if( savemask & (1<<5) ) printf( "	ld	r5,-4(r13)\n" );
@@ -46,13 +47,17 @@ eobl2(){
 		if( savemask & (1<<12) ) printf( "	ld	r12,-14(r13)\n" );
 		if( savemask & (1<<14) ) printf( "	ld	r14,-16(r13)\n" );
 	}
-
-	printf( "	ld	sp,r13\n" );
-	printf( "	pop	r13,@sp\n" );
+#else
+	printf( "	ldm	r4, -20(r14), #10\n");
+#endif
+	printf( "	ld	sp,r14\n" );
+	printf( "	pop	r14,@sp\n" );
 	printf( "	ret\n" );
 	printf( "_F%d = %ld\n", ftnno, spoff );
+#if 0
 	printf( "_S%d = %d\n", ftnno, savemask );
 	printf( "! M%d = %d\n", ftnno, maxtoff );
+#endif
 	maxtoff = 0;
 	if( fltused ) {
 		fltused = 0;

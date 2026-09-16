@@ -2,8 +2,8 @@
 
 # define makecc(val,i)  lastcon = i ? (val<<8)|lastcon : val
 
-# define  ARGINIT 32
-# define  AUTOINIT (8*SZINT)	/* reserve 16 bytes for callee-saved reg saves */
+# define  ARGINIT 40
+# define  AUTOINIT (10*SZINT)	/* reserve 16 bytes for callee-saved reg saves */
 
 # define  SZCHAR 8
 # define  SZINT 16
@@ -42,8 +42,8 @@
 /* register cookie for stack pointer */
 /* R13 is frame pointer, used for both stack and arg access */
 
-# define  STKREG 13
-# define ARGREG 13
+# define STKREG 14
+# define ARGREG 14
 
 /*	maximum and minimum register variables */
 
