@@ -145,7 +145,7 @@ bfcode( a, n ) int a[]; {
 	}
 
 	/* routine prolog */
-	/* push R13, ld R13,SP, sub SP,#framesize */
+	/* push R14, ld R14,SP, sub SP,#framesize */
 
 	printf( "	push	@sp,r14\n" );
 	printf( "	ld	r14,sp\n" );
@@ -180,7 +180,7 @@ bfcode( a, n ) int a[]; {
 			}
 
 		}
-	printf("! A%d = %d\n", ftnno, off/SZCHAR);
+	/* printf("! A%d = %d\n", ftnno, off/SZCHAR); */
 	}
 
 bccode(){ /* called just before the first executable statment */

@@ -40,7 +40,7 @@
 # define  CCTRANS(x) x
 
 /* register cookie for stack pointer */
-/* R13 is frame pointer, used for both stack and arg access */
+/* R14 is frame pointer, used for both stack and arg access */
 
 # define STKREG 14
 # define ARGREG 14

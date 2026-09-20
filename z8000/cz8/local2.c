@@ -106,8 +106,8 @@ int rstatus[] = {
 
 	SBREG|STBREG, SBREG|STBREG,	/* R8, R9: scratch addr */
 	SBREG|STBREG, SBREG|STBREG,	/* R10, R11: reg var addr */
-	SBREG|STBREG, SBREG,		/* R12: reg var addr, R13 (FP): not allocatable */
-	SBREG,	      SBREG,		/* R14 (reserved), R15 (SP): not allocatable */
+	SBREG|STBREG, SBREG|STBREG,	/* R12, R13: reg var addr */
+	SBREG,	      SBREG,		/* R14 (FP), R15 (SP): not allocatable */
 	};
 
 NODE *brnode;
@@ -377,7 +377,8 @@ setregs(){ /* set up temporary registers */
 		rstatus[i] = i<fregs ? SAREG|STAREG : SAREG;
 	for( i=MINRVAR; i<=MAXRVAR; i++ )
 		rstatus[i+8] = i<naregs ? SBREG|STBREG : SBREG;
-	rstatus[13] = SBREG;	/* R13 (FP): never allocatable */
+
+	rstatus[14] = SBREG;	/* R14 (FP): never allocatable */
 	rstatus[15] = SBREG;	/* R15 (SP): never allocatable */
 	}
 
