@@ -821,7 +821,7 @@ ldm_op()
 	op2 = &operands[1];
 	op3 = &operands[2];
 
-	/* ldm reg,@reg,#count  or  ldm reg,addr,#count */
+	/* ldm reg,@reg,#count  or  ldm reg,addr,#count  or  ldm reg,addr(reg),#count*/
 	if (op1->type_o == t_reg && wreg(op1->value_o)) {
 		rf = regfield(op1->value_o);
 		if (op3->type_o != t_immed) { Prog_Error(E_OPERAND); return; }
@@ -835,11 +835,16 @@ ldm_op()
 			WCode[1] = (rf << 8) | ((op3->value_o - 1) & 0x0F);
 			Code_length = 4;
 			rel_val(op2, W);
+		} else if ( op2->type_o == t_x) {
+			WCode[0] = 0x5c01 | (regfield(op2->reg_o) << 4);
+			WCode[1] = (rf << 8) | ((op3->value_o - 1) & 0x0F);
+			Code_length = 4;
+			rel_val(op2, W);
 		} else Prog_Error(E_OPERAND);
 		return;
 	}
 
-	/* ldm @reg,reg,#count  or  ldm addr,reg,#count */
+	/* ldm @reg,reg,#count  or  ldm addr,reg,#count  or  ldm addr(reg),reg,#count */
 	if (op2->type_o == t_reg && wreg(op2->value_o)) {
 		rf = regfield(op2->value_o);
 		if (op3->type_o != t_immed) { Prog_Error(E_OPERAND); return; }
@@ -853,7 +858,12 @@ ldm_op()
 			WCode[1] = (rf << 8) | ((op3->value_o - 1) & 0x0F);
 			Code_length = 4;
 			rel_val(op1, W);
-		} else Prog_Error(E_OPERAND);
+		} else if (op1->type_o == t_x) {
+			WCode[0] = 0x5c09 | (regfield(op1->reg_o) << 4);
+			WCode[1] = (rf << 8) | ((op3->value_o - 1) & 0x0F);
+			Code_length = 4;
+			rel_val(op1, W);
+		}	else Prog_Error(E_OPERAND);
 		return;
 	}
 
