@@ -48,7 +48,7 @@ eobl2(){
 		if( savemask & (1<<14) ) printf( "	ld	r14,-16(r13)\n" );
 	}
 #else
-	printf( "	ldm	r4, -20(r14), #10\n");
+	printf( "	ldm	r4,-20(r14),#10\n");
 #endif
 	printf( "	ld	sp,r14\n" );
 	printf( "	pop	r14,@sp\n" );
@@ -662,16 +662,16 @@ popargs( size ) register size; {
 
 char *
 ccbranches[] = {
-	"	jr eq,.L%d\n",
-	"	jr ne,.L%d\n",
-	"	jr le,.L%d\n",
-	"	jr lt,.L%d\n",
-	"	jr ge,.L%d\n",
-	"	jr gt,.L%d\n",
-	"	jr ule,.L%d\n",
-	"	jr ult,.L%d\n",
-	"	jr uge,.L%d\n",
-	"	jr ugt,.L%d\n",
+	"	jr\teq,.L%d\n",
+	"	jr\tne,.L%d\n",
+	"	jr\tle,.L%d\n",
+	"	jr\tlt,.L%d\n",
+	"	jr\tge,.L%d\n",
+	"	jr\tgt,.L%d\n",
+	"	jr\tule,.L%d\n",
+	"	jr\tult,.L%d\n",
+	"	jr\tuge,.L%d\n",
+	"	jr\tugt,.L%d\n",
 	};
 
 /*	long branch table

@@ -3,7 +3,7 @@ CFLAGS=-O0 -g3 -Wno-implicit-function-declaration -Wno-implicit-int -Wno-return-
 all: yaccV7
 
 yaccV7: y1.o y2.o y3.o y4.o
-	cc $(CFLAGS) -o yaccV7 y?.o
+	$(CC) $(CFLAGS) -o $@ y?.o
 
 y1.o y2.o y3.o y4.o: dextern files
 

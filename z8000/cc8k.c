@@ -33,7 +33,7 @@ int	noflflag;
 int	mxflag;
 char	*chpass ;
 char	*npassname ;
-char	pass0[64] = "/usr/local/bin/cz8";
+char	pass0[64] = "/usr/local/bin/c8k";
 char	pass1[64] = "/lib/oz8";
 char	pass2[64] = "/lib/xxx";
 char	passp[64] = "/usr/local/bin/cppV7";
