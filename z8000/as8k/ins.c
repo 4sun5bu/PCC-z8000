@@ -1209,7 +1209,7 @@ bit_op(opr, size)
 	if (numops != 2) { Prog_Error(E_NUMOPS); return; }
 	op1 = operands;	/* destination register */
 	op2 = &operands[1];	/* bit number */
-
+#if 0
 	if (op1->type_o != t_reg) { Prog_Error(E_OPERAND); return; }
 
 	if (op2->type_o == t_immed) {
@@ -1224,6 +1224,42 @@ bit_op(opr, size)
 		WCode[1] = rf << 8;
 		Code_length = 4;
 	} else Prog_Error(E_OPERAND);
+#else
+	if (op2->type_o == t_immed) {
+		/* static bit: bit number in imm4 */
+		if (op1->type_o == t_reg) {
+			/* Rd, #n */
+			int rf = (size == B) ? bregfield(op1->value_o) : regfield(op1->value_o);
+			if (op2->value_o < 0 || op2->value_o > (size == B ? 7 : 15)) Prog_Error(E_CONSTANT);
+			WCode[0] = (opr | 0x8000) | (rf << 4) | (op2->value_o & 0x0F);
+		} else if (op1->type_o == t_ireg) {
+			/* @Rd,#n */
+			if (!wreg(op1->reg_o) || op1->reg_o == 0) Prog_Error(E_REG);
+			int rf = (regfield(op1->reg_o) & 0x0f) | ((size == B) ? 0x0 : 0x10);
+			if (op2->value_o < 0 || op2->value_o > (size == B ? 7 : 15)) Prog_Error(E_CONSTANT);
+			WCode[0] = opr | (rf << 4) | (op2->value_o & 0x0F);
+		} else if (op1->type_o == t_normal) {
+			/* Address, #n */
+			int rf = (size == B) ? 0x00 : 0x10;
+			if (op2->value_o < 0 || op2->value_o > (size == B ? 7 : 15)) Prog_Error(E_CONSTANT);
+			WCode[0] = (opr | 0x4000) | (rf << 4) | (op2->value_o & 0x0F);
+			rel_val(op1, W);
+		} else if (op1->type_o == t_x) {
+			/* addres(Rd), #n */
+			if (!wreg(op1->reg_o) || op1->reg_o == 0) Prog_Error(E_REG);
+			int rf = (regfield(op1->reg_o) & 0x0f) | ((size == B) ? 0x0 : 0x10);
+			if (op2->value_o < 0 || op2->value_o > (size == B ? 7 : 15)) Prog_Error(E_CONSTANT);
+			WCode[0] = (opr | 0x4000) | (rf << 4) | (op2->value_o & 0x0F);
+			rel_val(op1, W);
+		}
+	} else if (op2->type_o == t_reg) {
+		/* dynamic bit: bit number in word register, target may be byte reg */
+		int rf = (size == B) ? bregfield(op1->value_o) : regfield(op1->value_o);
+		WCode[0] = opr | regfield(op2->value_o);
+		WCode[1] = rf << 8;
+		Code_length = 4;
+	} else Prog_Error(E_OPERAND);
+#endif
 }
 
 
